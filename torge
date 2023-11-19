@@ -1,0 +1,531 @@
+#!/bin/sh
+# by Dominik Stanisław Suchora <suchora.dominik7@gmail.com>
+# License: GNU GPLv3
+
+PAGE=1
+SEARCH=""
+DELIM="\t"
+
+C_LE="31"
+C_SE="32"
+C_PAGES="32"
+C_SIZE="33"
+C_CATEGORY="34"
+C_EXTENSION="34"
+C_VOLUME="34"
+C_LANGUAGE="34"
+C_DOWNLOADED="35"
+C_HEALTH="35"
+C_AUTHOR="35"
+C_DATE="36"
+C_NAME="39"
+COLOR=1
+
+alias ucurl='curl -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/5.15.2 Chrome/87.0.4280.144 Safari/537.36" -H "Accept-Encoding: gzip, deflate" --compressed'
+
+arg0="$(basename "$0")"
+
+print_help() {
+    printf "%s [SOURCE] [OPTION]... [PATTERN]\nSearch torrent sites for PATTERN in SOURCE.\nExample: %s tpb -s size -p 2 'archlinux'\n\n" "$arg0" "$arg0"
+    printf "Sources:\n  tpb|thepiratebay\n  lt|limetorrents\n  1337x\n  rarbg\n  nyaa\n  libgen\n\n"
+    printf "Universal options:\n"
+    printf "  -d,  --domain DOMAIN\t\tset domain to DOMAIN\n"
+    printf "  -D,  --delimiter DELIM\tset delimiter to DELIM, by default '\\\\t'\n"
+    printf "  -p,  --page NUM\t\tshow page at NUM\n"
+    printf "  -C,  --no-color\t\tdisable coloring of output\n"
+    printf "  -h,  --help\t\t\tshow help\n\n"
+    printf "Further help can be found by typing %s SOURCE -h.\n" "$arg0"
+    printf "Output will be copied via xclip.\n"
+}
+
+pastelines() {
+    awk -v "fields=$1" -v "raw_colors=$2" 'function print_fields(lines,fields,step,colors) {
+            ORS = ""
+            for (i = 0; i < step; i++) {
+                for (j = 0; j < fields; j++) {
+                    if (j != 0)
+                        print "'"$DELIM"'"
+                    if ('"$COLOR"')
+                        print "\033["colors[j+1]"m"lines[(step*j)+i]"\033[0m"
+                    else
+                        print lines[(step*j)+i]
+                }
+                printf "\n"
+            }
+        }
+
+        BEGIN {
+            l=0;
+            split(raw_colors,colors,",");
+        }
+
+        { lines[l++]=$0 }
+
+        END {
+            if (l >= fields)
+            if (l%fields == 0) {
+                    step = l/fields
+                    print_fields(lines,fields,step,colors)
+            } else
+                print "length of some data fields does not match the others"
+        }'
+}
+
+tpb_help() {
+    printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le, author, category\n'
+    printf "  -r,  --reverse\t\tsort in reverse\n"
+}
+
+tpb_searchtrans() {
+    tr ' ' '.'
+}
+
+tpb_settings() {
+    [ -z "$DOMAIN" ] && DOMAIN="https://tpb.party"
+    SORT='7'
+    case "$sort_type" in
+        name) SORT='1';;
+        date) SORT='3';;
+        size) SORT='5';;
+        le) SORT='8';;
+        se) SORT='9';;
+        author) SORT='11';;
+        category) SORT='13';;
+    esac
+    [ -n "$sort_reverse" ] && [ "$sort_type" != "le" -a "$sort_type" != "se" ] && SORT="$(expr "$SORT" + '1')"
+}
+
+tpb_page() {
+    t1="$(ucurl -s "$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0" | hgrep 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
+    out_tmp="$(echo "$t1" | grep -oE 'magnet:\?[^"]+')" #magnet
+    {
+    echo "$t1" | hgrep 'center; a @p"%i\n"' | sed 'N; s/.*\n//' #category
+    echo "$t1" | grep -o "Size [0-9].*," | sed 's/Size //; s/\&nbsp\;/ /; s/,//;' #size
+    echo "$t1" | grep -o 'Uploaded [0-9A-Za-z].*[0-9],' | sed 's/Uploaded //; s/&nbsp\;/-/; s/,//' #date
+    echo "$t1" | hgrep 'a +class="detLink" +title @p"%i\n"' #name
+    t2="$(echo "$t1" | hgrep 'td +align="right" @p"%i\n"' | sed 'N; s/\n/ /')"
+    echo "$t2" | cut -d ' ' -f1 #se
+    echo "$t2" | cut -d ' ' -f2 #le
+    echo "$t1" | hgrep 'a +class="detDesc" @p"%i\n"' #author
+    } | pastelines 7 "$C_CATEGORY,$C_SIZE,$C_DATE,$C_NAME,$C_SE,$C_LE,$C_AUTHOR" | nl
+}
+
+tpb_out() {
+    echo "$out_tmp" | sed "$1q;d"
+}
+
+lt_help() {
+    printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n"'
+}
+
+lt_searchtrans() {
+    tr ' .+/_:;' '-'
+}
+
+lt_settings() {
+    [ -z "$DOMAIN" ] && DOMAIN="https://www.limetorrents.lol/"
+    SORT=''
+    case "$sort_type" in
+        name) SORT='';;
+        size) SORT='size';;
+        date) SORT='time';;
+        se) SORT='seeds';;
+        le) SORT='leechs';;
+    esac
+}
+
+lt_page() {
+    t1="$(ucurl -g -L -s "$DOMAIN/search/all/$SEARCHP/$SORT/$PAGE/" | hgrep 'table +class="table2"; td')"
+    t2="$(echo "$t1" | hgrep 'td +class="tdnormal" @p"%i\n"')"
+    out_tmp="$(echo "$t1" | hgrep 'td +class="tdleft"; a +href=".*\.html" @p"'$DOMAIN'/%(href)a\n"')"
+    {
+    echo "$t1" | hgrep 'td +class="tdleft"; a +href=".*\.html" @p"%i\n"' #name
+    echo "$t2" | sed '/ - /!d; s/ - .*//' #date
+    echo "$t2" | grep -v ' - ' #size
+    echo "$t1" | hgrep 'td +class="tdseed" @p"%i\n"' #se
+    echo "$t1" | hgrep 'td +class="tdleech" @p"%i\n"' #le
+    echo "$t1" | hgrep 'td +class="tdright"; div @p"%(class)a\n"' #health
+    } | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_HEALTH" | nl
+}
+
+lt_out() {
+    ucurl -L -g -s "$(echo "$out_tmp" | sed "s/ /%20/g; $1q;d")" | grep -oE -m 1 'magnet:\?[^"]+'
+}
+
+t1337x_help() {
+    printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n"'
+    printf "  -r,  --reverse\t\tsort in reverse\n"
+}
+
+t1337x_searchtrans() {
+    tr ' .+/_:;' '-'
+}
+
+t1337x_settings() {
+    [ -z "$DOMAIN" ] && DOMAIN="https://www.1337xx.to"
+    if [ -z "$sort_type" ]
+    then
+        SORT=''
+        RSORT=""
+        PSORT="search"
+    else
+        case "$sort_type" in
+            name) SORT='';;
+            size) SORT='size';;
+            date) SORT='time';;
+            se) SORT='seeds';;
+            le) SORT='leechs';;
+        esac
+        PSORT="sort-search"
+        [ -z "$sort_reverse" ] && RSORT="desc" || RSORT="asc"
+    fi
+}
+
+t1337x_page() {
+    t1="$(ucurl -s "$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/" | hgrep 'tbody')"
+    out_tmp="$(echo "$t1" | hgrep 'a +href="/torrent/.*" @p"'$DOMAIN'/%(href)a\n"')" #links
+    {
+    echo "$t1" | hgrep 'a +href="/torrent/.*" @p"%i\n"' #name
+    echo "$t1" | hgrep 'td +class="coll-date" @p"%i\n"' #date
+    echo "$t1" | hgrep 'td +class="coll-4 .*" @p"%i\n"' | grep -o '^[^<]*' #size
+    echo "$t1" | hgrep 'td +class="coll-2 seeds" @p"%i\n"' #se
+    echo "$t1" | hgrep 'td +class="coll-3 leeches" @p"%i\n"' #le
+    echo "$t1" | hgrep 'td +class="coll-5 .*"; a @p"%i\n"' #author
+    } | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR" | nl
+}
+
+t1337x_out() {
+    ucurl -g -s "$(echo "$links" | sed "$1q;d")" | grep -oE -m 1 'magnet:\?[^"]+'
+}
+
+rarbg_help() {
+    printf '  -c,  --categories CATEGORIES\tsearch using CATEGORIES that can be: movies, anime, xxx, tv, apps, games, doc, music, other which can be separated by common delimiters\n'
+    printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n'
+    printf "  -r,  --reverse\t\tsort in reverse\n"
+}
+
+rarbg_searchtrans() {
+    sed 's/+/%2B/g; s/;/%3B/g; s/\//%2F/g; s/?/%3F/g; s/\$/%24/g; s/@/%40/g; s/#/%23/g; s/%/%25/g; s/&/%26/g; s/ /+/g;'
+}
+
+rarbg_settings() {
+    [ -z "$DOMAIN" ] && DOMAIN="https://rargb.to"
+    RSORT="ASC"
+    SORT=''
+    case "$sort_type" in
+        name) SORT='';;
+        size) SORT='size';;
+        date) SORT='data';;
+        se) SORT='seeders';;
+        le) SORT='leechers';;
+    esac
+    [ -z "$sort_reverse" ] && RSORT="DESC"
+    [ -n "$SORT" ] && SORT="&order=$SORT&by=$RSORT"
+    #printf "  -c,  --categories CATEGORIES\tsearch using CATEGORIES that can be: movies, anime, xxx, tv, apps, games, doc, music, other which can be separated by common delimiters\n"
+    [ -n "$categories_type" ] && CATEGORIES=$(echo "$2" | sed -E 's/^/\&category[]=/; s/(,|\/|-|\+|\|)/\&category[]=/g')
+}
+
+rarbg_page() {
+    t1="$(ucurl -s -L -g "$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES" | hgrep 'tr +class="lista2"; td')"
+    out_tmp="$(echo "$t1" | hgrep 'td; a +title @p"'"$DOMAIN"'%(href)a\n"')" #links
+    {
+    echo "$t1" | hgrep 'td; a +title @p"%i\n"' #name
+    echo "$t1" | hgrep 'td +class="lista" +width="150px" @M"<" @p"%i\n"' #date
+    echo "$t1" | hgrep 'td +class="lista" +width="100px" @p"%i\n"' #size
+    echo "$t1" | hgrep 'font +color @p"%i\n"' #se
+    echo "$t1" | hgrep 'td +class="lista" +width="50px" @M"<" @p"%i\n"' #le
+    echo "$t1" | hgrep 'td +class="lista" -width +align="center" @p"%i\n"' #author
+    } | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR" | nl
+}
+
+rarbg_out() {
+    ucurl -g -s "$(echo "$out_tmp" | sed "$1q;d")" | grep -oE -m 1 'magnet:\?[^"]+' #!!
+}
+
+nyaa_help() {
+    printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, comments, size, date, se, le, downloads\n'
+    printf "  -r,  --reverse\t\tsort in reverse\n"
+    printf '  -f,  --filter\t\t\tset filter to: no, no-remakes, no-trusted\n'
+    printf '  -c,  --categories\t\tsearch one of categories:\n'
+    printf '\t  all\n'
+    printf '\t  anime, anime-music-video, anime-english-translated,\n\t  anime-non-english-translated, anime-raw\n'
+    printf '\t  audio, audio-lossless, audio-lossy\n'
+    printf '\t  literature, literature-english-translated,\n\t  literature-non-english-translated, literature-raw\n'
+    printf '\t  live-action, live-action-english-translated, live-action-idol-promotional-video,\n\t  live-action-non-english-translated, live-action-raw\n'
+    printf '\t  pictures, pictures-graphics, pictures-photos\n'
+    printf '\t  software, software-applications, software-games\n'
+}
+
+nyaa_searchtrans() {
+    tr ' ' '+'
+}
+
+nyaa_settings() {
+    [ -z "$DOMAIN" ] && DOMAIN="https://nyaa.si"
+    RSORT="asc"
+    CATEGORIES='0_0'
+    FILTER='0'
+
+    SORT=''
+    case "$sort_type" in
+        name) SORT='';;
+        comments) SORT='comments';;
+        size) SORT='size';;
+        date) SORT='id';;
+        se) SORT='seeders';;
+        le) SORT='leechers';;
+        downloads) SORT='downloads';;
+    esac
+
+    [ -z "$sort_reverse" ] && RSORT="desc"
+    if [ -n "$filter_type" ]
+    then
+        case "$filter_type" in
+            no) FILTER='0';;
+            no-remakes) FILTER='1';;
+            trusted) FILTER='2';;
+        esac
+    fi
+    if [ -n "$categories_type" ]
+    then
+        case "$categories_type" in
+            all) CATEGORIES='0_0';;
+            anime) CATEGORIES='1_0';;
+            anime-music-video) CATEGORIES='1_1';;
+            anime-english-translated) CATEGORIES='1_2';;
+            anime-non-english-translated) CATEGORIES='1_3';;
+            anime-raw) CATEGORIES='1_4';;
+            audio) CATEGORIES='2_0';;
+            audio-lossless) CATEGORIES='2_1';;
+            audio-lossy) CATEGORIES='2_2';;
+            literature) CATEGORIES='3_0';;
+            literature-english-translated) CATEGORIES='3_1';;
+            literature-non-english-translated) CATEGORIES='3_2';;
+            literature-raw) CATEGORIES='3_3';;
+            live-action) CATEGORIES='4_0';;
+            live-action-english-translated) CATEGORIES='4_1';;
+            live-action-idol-promotional-video) CATEGORIES='4_2';;
+            live-action-non-english-translated) CATEGORIES='4_3';;
+            live-action-raw) CATEGORIES='4_4';;
+            pictures) CATEGORIES='5_0';;
+            pictures-graphics) CATEGORIES='5_1';;
+            pictures-photos) CATEGORIES='5_2';;
+            software) CATEGORIES='6_0';;
+            software-applications) CATEGORIES='6_1';;
+            software-games) CATEGORIES='6_2';;
+        esac
+    fi
+}
+
+nyaa_page() {
+    t1="$(ucurl -s "$DOMAIN/?f=$FILTER&c=$CATEGORIES&q=$SEARCHP&s=$SORT&o=$RSORT&p=$PAGE" | hgrep 'table +class="table table-bordered table-hover table-striped torrent-list"')"
+    out_tmp="$(echo "$t1" | hgrep 'td +class; a +href="magnet:?.*" @p"%(href)a\n"')"
+    {
+    echo "$t1" | hgrep 'a +href="/?c=[0-9]_[0-9]"; img +class="category-icon" +alt @p"%(alt)a\n"' #category
+    echo "$t1" | hgrep 'td +colspan="2"; a +href="/view/[0-9]*" @p"%i\n"' #name
+    echo "$t1" | hgrep 'td +class @m"iB$" @p"%i\n"' #size
+    echo "$t1" | hgrep 'td +class +data-timestamp @p"%i\n"' #date
+    t2="$(echo "$t1" | hgrep 'td +class @m"^[0-9]\+$" @p"%i\n"' | sed 'N;N; s/\n/,/g')"
+    echo "$t2" | cut -d ',' -f1 #se
+    echo "$t2" | cut -d ',' -f2 #le
+    echo "$t2" | cut -d ',' -f3 #downloaded
+    } | pastelines 7 "$C_CATEGORY,$C_NAME,$C_SIZE,$C_DATE,$C_SE,$C_LE,$C_DOWNLOADED" | nl
+}
+
+nyaa_out() {
+    echo "$out_tmp" | sed "$1q;d"
+}
+
+libgen_help() {
+    printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: id, name, publisher, date, pages, lang, size, extension\n'
+    printf "  -r,  --reverse\t\tsort in reverse\n"
+    printf "  -S,  --searchby TYPE\t\tsearch by TYPE, that can be: def, name, author, series, publisher, date, isbn, lang, md5, tags, extension\n"
+    printf "  -F,  --format FORMAT\t\tspecify file format for results\n"
+    printf "  -l,  --language LANG\t\tspecify language for results (only for fiction)\n"
+    printf "  -m,  --mode MODE\t\t\tsearches in choosen MODE which can be: nf|non-fiction, f|fiction, s|science\n"
+    printf "  -M,  --mask\t\t\tuse wildcards for PATTERN\n"
+    printf "  -R,  --results NUM\t\tshow NUM results\n"
+}
+
+libgen_searchtrans() {
+    tr ' ' '+'
+}
+
+libgen_settings() {
+    [ -z "$DOMAIN" ] && DOMAIN="https://libgen.st"
+
+    [ -z "$RESULTS" ] && RESULTS='25'
+
+    MODE='0'
+    case "$mode_type" in
+        nf|non-fiction) MODE='0';;
+        f|fiction) MODE='1';;
+        s|science) MODE='2';;
+    esac
+
+    SORT=''
+    case "$sort_type" in
+        id) SORT='id';;
+        name) SORT='title';;
+        publisher) SORT='publisher';;
+        date) SORT='year';;
+        pages) SORT='pages';;
+        lang) SORT='language';;
+        size) SORT='filesize';;
+        extension) SORT='extension';;
+    esac
+    RSORT="DESC"
+    [ -z "$sort_reverse" ] && RSORT="ASC"
+
+    SEARCHBY='def'
+    case "$searchby_type" in
+        def) SEARCHBY="def";;
+        name) SEARCHBY="title";;
+        author) SEARCHBY="author";;
+        series) SEARCHBY="series";;
+        publisher) SEARCHBY="publisher";;
+        date) SEARCHBY="year";;
+        isbn) SEARCHBY="identifier";;
+        lang) SEARCHBY="language";;
+        md5) SEARCHBY="md5";;
+        tags) SEARCHBY="tags";;
+        extension) SEARCHBY="extension";;
+    esac
+
+    LANG="";
+
+    MASK='1'
+    [ -n "$mask_enable" ] && MASK='0'
+}
+
+libgen_page() {
+    case $MODE in
+        0)
+            t1="$(ucurl -s "$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT" | tr -d '\r' | hgrep 'table +rules="cols" +width="100%" +border="0"; tr @l[2]')"
+            out_tmp="$(echo "$t1" | hgrep 'td +colspan="2"' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^\?md5=/http:\/\/library.lol\/main\//')" #!!
+            {
+            echo "$t1" | hgrep 'td +colspan="2"; a @p"%i\n"' #name
+            echo "$t1" | sed -En '/<td><font color="gray">Pages:<\/font><\/td>/{N;s/.*\n//;s/<td>//;s/<\/td>//;s/<br>.*//;s/.*, //;p}' #pages
+            echo "$t1" | sed -E '/<td><font color="gray">Size:<\/font><\/td>/{N; s/[^0-9]+([0-9]+.*) \([0-9]+\).*/Size:\1/}; /^Size:/!d; s/^Size://' #size
+            echo "$t1" | sed -E '/<td><font color="gray">Year:<\/font><\/td>/{N; s/[^0-9]+?(([0-9]+)|.*).*/Year:\1/}; /^Year:/!d; s/^Year://' #date
+            echo "$t1" | hgrep 'td +colspan="3"; b @p"%i\n"' | sed -E "s/<a href=?(\"|')[^\"']+?(\"|')>//g; s/<\/a>//g; s/, /,/g" #author
+            echo "$t1" | sed -E '/<td><font color="gray">Extension:<\/font><\/td>/{N; s/.*>([a-zA-Z0-9]+).*/Extension:\1/}; /^Extension:/!d; s/^Extension://' #extension
+            } | recode html..UTF-8 | pastelines 6 "$C_NAME,$C_PAGES,$C_SIZE,$C_DATE,$C_AUTHOR,$C_EXTENSION" | nl;;
+        1)
+            [ "$SEARCHBY" = 'def' ] && SEARCHBY=""
+            [ "$MASK" -eq 1 ] && MASK=0 || MASK=1
+
+            t1="$(ucurl -s "$DOMAIN/fiction/?q=$SEARCHP&criteria=$SEARCHBY&language=$LANG&wildcard=$MASK&format=$FORMAT&page=$PAGE" | hgrep 'tbody; tr')"
+            out_tmp="$(echo "$t1" | hgrep 'ul +class="record_mirrors_compact" @p"%i\n"' | sed -E 's/^<li><a href="//; s/".*//')"
+            {
+            echo "$t1" | hgrep 'td; a -title @p"%i\n"' #name
+            echo "$t1" | hgrep 'ul +class="catalog_authors" @p"%i\n"' | sed -E "s/\t//g; /^$/d; s/^<li>//g; s/<li>/,/g; s/<\/li>//g; s/<a href=?(\"|')[^\"']+?(\"|') title=?(\"|')[^\"']+?(\"|')>//g; s/<\/a>//g; s/, /,/g" #author
+            echo "$t1" | hgrep 'td +title @p"%i\n"' | sed 's/.* //' #size
+            echo "$t1" | hgrep 'td +title @p"%i\n"' | sed 's/ .*//; s/[A-Z]/\L&/g;' #extension
+            echo "$t1" | hgrep 'td -title @M"<" @p"%i\n"' | sed 'N;s/.*\n//' #language
+            } | recode html..UTF-8 | pastelines 5 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_EXTENSION,$C_LANGUAGE" | nl;;
+        2)
+            t1="$(ucurl -s "$DOMAIN/scimag/?q=$SEARCHP&page=$PAGE" | sed 's/<p>volume/volume/' | hgrep 'tbody; tr; td @p"%i\n"')"
+            out_tmp="$(echo "$t1" | hgrep 'ul @p"%i\n"' | sed 's/^<li><a href="//; s/">.*//')"
+            {
+            echo "$t1" | hgrep 'p; a @p"%i\n"' | sed 'N; s/\n/ - /;' #name
+            echo "$t1" | sed -E '/^[^<>]*$/!d' | sed 'N;s/\n.*//' #author
+            #echo "$t1" | sed -E '/^[[:space:]]+<p>DOI: [^<>]+<\/p>/!d; s/.*DOI: //; s/<\/p>.*//' #doi
+            echo "$t1" | sed '/title="edit metadata">/!d; s/<br>.*//; s/&nbsp;//' #size
+            echo "$t1" | sed '/<\/a>volume.*<\/p>/!d; s/.*volume/volume/; s/<\/p>$//; s/&nbsp;//g' #volume
+            } | recode html..UTF-8 | pastelines 4 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_VOLUME" | nl;;
+    esac
+}
+
+libgen_out() {
+    link="$(echo "$out_tmp" | sed "s/ /%20/g; ${NUMBER}q;d")"
+    if echo "$link" | grep '://sci-hub' -q
+    then
+        ucurl -g -s "$link" | hgrep 'embed @p"%(src)a\n"' | sed 's/^/https:/'
+    else
+        ucurl -g -s "$link" | hgrep 'h2; a +href @p"%(href)a\n" @l[1]'
+    fi
+}
+
+if [ "$#" -eq '0' ]
+then
+    print_help
+    exit 0
+fi
+
+case "$1" in
+    tpb|thepiratebay) basesite="tpb";;
+    lt|limetorrents) basesite="lt";;
+    rarbg) basesite="rarbg";;
+    nyaa) basesite="nyaa";;
+    1337x) basesite="t1337x";;
+    libgen) basesite="libgen";;
+    *) print_help; exit 0;
+esac
+shift
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        -s|--sort)
+            sort_type="$2"
+            shift;;
+        -h|--help)
+            ${basesite}_help;
+            exit 0;;
+        -r|--reverse)
+            sort_reverse='1';;
+        -R|--results)
+            RESULTS="$1"
+            shift;;
+        -f|--filter)
+            filter_type="$2"
+            shift;;
+        -c|--categories)
+            categories_type="$2"
+            shift;;
+        -S|--searchby)
+            searchby_type="$2"
+            shift;;
+        -m|--mode)
+            mode_type="$2"
+            shift;;
+        -M|--mask)
+            mask_enable="$2";;
+        -C|--no-color)
+            COLOR=0;;
+        -p|--page)
+            PAGE="$2"
+            shift;;
+        -d|--domain)
+            DOMAIN="$2"
+            shift;;
+        -F|--format)
+            FORMAT="$2"
+            shift;;
+        -l|--language)
+            LANG="$2"
+            shift;;
+        -D|--delimiter)
+            DELIM="$2"
+            shift;;
+        *)
+            if [ -z "$SEARCH" ]
+            then
+              SEARCH="$1"
+            else
+              SEARCH="$SEARCH $1"
+            fi;;
+    esac
+    shift
+done
+
+SEARCHP="$(echo "$SEARCH" | ${basesite}_searchtrans)"
+
+${basesite}_settings
+${basesite}_page
+
+[ -z "$out_tmp" ] && exit 1
+printf 'num> '
+read -r NUMBER
+[ "$NUMBER" -gt 0 ] && ${basesite}_out "$NUMBER" | tee /dev/stderr | head -n1 | tr -d '\n' | xclip -sel clip
