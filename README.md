@@ -57,11 +57,11 @@ Search for the biggest lossless audio
 
 Search for scientific articles about evolution on 2nd page
 
-    torge libgen -p 2 -S evolution
+    torge libgen -p 2 -m science evolution
 
 Search for Lovecraft's fiction in pdf format
 
-    torge libgen -f pdf -F lovecraft
+    torge libgen -F pdf -m fiction lovecraft
 
 Search search for 'The Road to Serfdom' ordered by size, reversed
 
