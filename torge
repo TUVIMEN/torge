@@ -99,14 +99,14 @@ tpb_page() {
     t1="$(ucurl -s "$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0" | hgrep 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
     out_tmp="$(echo "$t1" | grep -oE 'magnet:\?[^"]+')" #magnet
     {
-    echo "$t1" | hgrep 'center; a @p"%i\n"' | sed 'N; s/.*\n//' #category
+    echo "$t1" | hgrep 'center; a | "%i\n"' | sed 'N; s/.*\n//' #category
     echo "$t1" | grep -o "Size [0-9].*," | sed 's/Size //; s/\&nbsp\;/ /; s/,//;' #size
     echo "$t1" | grep -o 'Uploaded [0-9A-Za-z].*[0-9],' | sed 's/Uploaded //; s/&nbsp\;/-/; s/,//' #date
-    echo "$t1" | hgrep 'a +class="detLink" +title @p"%i\n"' #name
-    t2="$(echo "$t1" | hgrep 'td +align="right" @p"%i\n"' | sed 'N; s/\n/ /')"
+    echo "$t1" | hgrep 'a +class="detLink" +title | "%i\n"' #name
+    t2="$(echo "$t1" | hgrep 'td +align="right" | "%i\n"' | sed 'N; s/\n/ /')"
     echo "$t2" | cut -d ' ' -f1 #se
     echo "$t2" | cut -d ' ' -f2 #le
-    echo "$t1" | hgrep 'a +class="detDesc" @p"%i\n"' #author
+    echo "$t1" | hgrep 'a +class="detDesc" | "%i\n"' #author
     } | pastelines 7 "$C_CATEGORY,$C_SIZE,$C_DATE,$C_NAME,$C_SE,$C_LE,$C_AUTHOR" | nl
 }
 
@@ -136,15 +136,15 @@ lt_settings() {
 
 lt_page() {
     t1="$(ucurl -g -L -s "$DOMAIN/search/all/$SEARCHP/$SORT/$PAGE/" | hgrep 'table +class="table2"; td')"
-    t2="$(echo "$t1" | hgrep 'td +class="tdnormal" @p"%i\n"')"
-    out_tmp="$(echo "$t1" | hgrep 'td +class="tdleft"; a +href=".*\.html" @p"'$DOMAIN'/%(href)a\n"')"
+    t2="$(echo "$t1" | hgrep 'td +class="tdnormal" | "%i\n"')"
+    out_tmp="$(echo "$t1" | hgrep 'td +class="tdleft"; a +href=".*\.html" | "'$DOMAIN'/%(href)a\n"')"
     {
-    echo "$t1" | hgrep 'td +class="tdleft"; a +href=".*\.html" @p"%i\n"' #name
+    echo "$t1" | hgrep 'td +class="tdleft"; a +href=".*\.html" | "%i\n"' #name
     echo "$t2" | sed '/ - /!d; s/ - .*//' #date
     echo "$t2" | grep -v ' - ' #size
-    echo "$t1" | hgrep 'td +class="tdseed" @p"%i\n"' #se
-    echo "$t1" | hgrep 'td +class="tdleech" @p"%i\n"' #le
-    echo "$t1" | hgrep 'td +class="tdright"; div @p"%(class)a\n"' #health
+    echo "$t1" | hgrep 'td +class="tdseed" | "%i\n"' #se
+    echo "$t1" | hgrep 'td +class="tdleech" | "%i\n"' #le
+    echo "$t1" | hgrep 'td +class="tdright"; div | "%(class)a\n"' #health
     } | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_HEALTH" | nl
 }
 
@@ -183,14 +183,14 @@ t1337x_settings() {
 
 t1337x_page() {
     t1="$(ucurl -s "$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/" | hgrep 'tbody')"
-    out_tmp="$(echo "$t1" | hgrep 'a +href="/torrent/.*" @p"'$DOMAIN'/%(href)a\n"')" #links
+    out_tmp="$(echo "$t1" | hgrep 'a +href="/torrent/.*" | "'$DOMAIN'/%(href)a\n"')" #links
     {
-    echo "$t1" | hgrep 'a +href="/torrent/.*" @p"%i\n"' #name
-    echo "$t1" | hgrep 'td +class="coll-date" @p"%i\n"' #date
-    echo "$t1" | hgrep 'td +class="coll-4 .*" @p"%i\n"' | grep -o '^[^<]*' #size
-    echo "$t1" | hgrep 'td +class="coll-2 seeds" @p"%i\n"' #se
-    echo "$t1" | hgrep 'td +class="coll-3 leeches" @p"%i\n"' #le
-    echo "$t1" | hgrep 'td +class="coll-5 .*"; a @p"%i\n"' #author
+    echo "$t1" | hgrep 'a +href="/torrent/.*" | "%i\n"' #name
+    echo "$t1" | hgrep 'td +class="coll-date" | "%i\n"' #date
+    echo "$t1" | hgrep 'td +class="coll-4 .*" | "%i\n"' | grep -o '^[^<]*' #size
+    echo "$t1" | hgrep 'td +class="coll-2 seeds" | "%i\n"' #se
+    echo "$t1" | hgrep 'td +class="coll-3 leeches" | "%i\n"' #le
+    echo "$t1" | hgrep 'td +class="coll-5 .*"; a | "%i\n"' #author
     } | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR" | nl
 }
 
@@ -227,14 +227,14 @@ rarbg_settings() {
 
 rarbg_page() {
     t1="$(ucurl -s -L -g "$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES" | hgrep 'tr +class="lista2"; td')"
-    out_tmp="$(echo "$t1" | hgrep 'td; a +title @p"'"$DOMAIN"'%(href)a\n"')" #links
+    out_tmp="$(echo "$t1" | hgrep 'td; a +title | "'"$DOMAIN"'%(href)a\n"')" #links
     {
-    echo "$t1" | hgrep 'td; a +title @p"%i\n"' #name
-    echo "$t1" | hgrep 'td +class="lista" +width="150px" @M"<" @p"%i\n"' #date
-    echo "$t1" | hgrep 'td +class="lista" +width="100px" @p"%i\n"' #size
-    echo "$t1" | hgrep 'font +color @p"%i\n"' #se
-    echo "$t1" | hgrep 'td +class="lista" +width="50px" @M"<" @p"%i\n"' #le
-    echo "$t1" | hgrep 'td +class="lista" -width +align="center" @p"%i\n"' #author
+    echo "$t1" | hgrep 'td; a +title | "%i\n"' #name
+    echo "$t1" | hgrep 'td +class="lista" +width="150px" @M"<" | "%i\n"' #date
+    echo "$t1" | hgrep 'td +class="lista" +width="100px" | "%i\n"' #size
+    echo "$t1" | hgrep 'font +color | "%i\n"' #se
+    echo "$t1" | hgrep 'td +class="lista" +width="50px" @M"<" | "%i\n"' #le
+    echo "$t1" | hgrep 'td +class="lista" -width +align="center" | "%i\n"' #author
     } | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR" | nl
 }
 
@@ -319,13 +319,13 @@ nyaa_settings() {
 
 nyaa_page() {
     t1="$(ucurl -s "$DOMAIN/?f=$FILTER&c=$CATEGORIES&q=$SEARCHP&s=$SORT&o=$RSORT&p=$PAGE" | hgrep 'table +class="table table-bordered table-hover table-striped torrent-list"')"
-    out_tmp="$(echo "$t1" | hgrep 'td +class; a +href="magnet:?.*" @p"%(href)a\n"')"
+    out_tmp="$(echo "$t1" | hgrep 'td +class; a +href="magnet:?.*" | "%(href)a\n"')"
     {
-    echo "$t1" | hgrep 'a +href="/?c=[0-9]_[0-9]"; img +class="category-icon" +alt @p"%(alt)a\n"' #category
-    echo "$t1" | hgrep 'td +colspan="2"; a +href="/view/[0-9]*" @p"%i\n"' #name
-    echo "$t1" | hgrep 'td +class @m"iB$" @p"%i\n"' #size
-    echo "$t1" | hgrep 'td +class +data-timestamp @p"%i\n"' #date
-    t2="$(echo "$t1" | hgrep 'td +class @m"^[0-9]\+$" @p"%i\n"' | sed 'N;N; s/\n/,/g')"
+    echo "$t1" | hgrep 'a +href="/?c=[0-9]_[0-9]"; img +class="category-icon" +alt | "%(alt)a\n"' #category
+    echo "$t1" | hgrep 'td +colspan="2"; a +href="/view/[0-9]*" | "%i\n"' #name
+    echo "$t1" | hgrep 'td +class @m"iB$" | "%i\n"' #size
+    echo "$t1" | hgrep 'td +class +data-timestamp | "%i\n"' #date
+    t2="$(echo "$t1" | hgrep 'td +class @m"^[0-9]\+$" | "%i\n"' | sed 'N;N; s/\n/,/g')"
     echo "$t2" | cut -d ',' -f1 #se
     echo "$t2" | cut -d ',' -f2 #le
     echo "$t2" | cut -d ',' -f3 #downloaded
@@ -404,11 +404,11 @@ libgen_page() {
             t1="$(ucurl -s "$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT" | tr -d '\r' | hgrep 'table +rules="cols" +width="100%" +border="0"; tr @l[2]')"
             out_tmp="$(echo "$t1" | hgrep 'td +colspan="2"' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^\?md5=/http:\/\/library.lol\/main\//')" #!!
             {
-            echo "$t1" | hgrep 'td +colspan="2"; a @p"%i\n"' #name
+            echo "$t1" | hgrep 'td +colspan="2"; a | "%i\n"' #name
             echo "$t1" | sed -En '/<td><font color="gray">Pages:<\/font><\/td>/{N;s/.*\n//;s/<td>//;s/<\/td>//;s/<br>.*//;s/.*, //;p}' #pages
             echo "$t1" | sed -E '/<td><font color="gray">Size:<\/font><\/td>/{N; s/[^0-9]+([0-9]+.*) \([0-9]+\).*/Size:\1/}; /^Size:/!d; s/^Size://' #size
             echo "$t1" | sed -E '/<td><font color="gray">Year:<\/font><\/td>/{N; s/[^0-9]+?(([0-9]+)|.*).*/Year:\1/}; /^Year:/!d; s/^Year://' #date
-            echo "$t1" | hgrep 'td +colspan="3"; b @p"%i\n"' | sed -E "s/<a href=?(\"|')[^\"']+?(\"|')>//g; s/<\/a>//g; s/, /,/g" #author
+            echo "$t1" | hgrep 'td +colspan="3"; b | "%i\n"' | sed -E "s/<a href=?(\"|')[^\"']+?(\"|')>//g; s/<\/a>//g; s/, /,/g" #author
             echo "$t1" | sed -E '/<td><font color="gray">Extension:<\/font><\/td>/{N; s/.*>([a-zA-Z0-9]+).*/Extension:\1/}; /^Extension:/!d; s/^Extension://' #extension
             } | recode html..UTF-8 | pastelines 6 "$C_NAME,$C_PAGES,$C_SIZE,$C_DATE,$C_AUTHOR,$C_EXTENSION" | nl;;
         1)
@@ -416,19 +416,19 @@ libgen_page() {
             [ "$MASK" -eq 1 ] && MASK=0 || MASK=1
 
             t1="$(ucurl -s "$DOMAIN/fiction/?q=$SEARCHP&criteria=$SEARCHBY&language=$LANG&wildcard=$MASK&format=$FORMAT&page=$PAGE" | hgrep 'tbody; tr')"
-            out_tmp="$(echo "$t1" | hgrep 'ul +class="record_mirrors_compact" @p"%i\n"' | sed -E 's/^<li><a href="//; s/".*//')"
+            out_tmp="$(echo "$t1" | hgrep 'ul +class="record_mirrors_compact" | "%i\n"' | sed -E 's/^<li><a href="//; s/".*//')"
             {
-            echo "$t1" | hgrep 'td; a -title @p"%i\n"' #name
-            echo "$t1" | hgrep 'ul +class="catalog_authors" @p"%i\n"' | sed -E "s/\t//g; /^$/d; s/^<li>//g; s/<li>/,/g; s/<\/li>//g; s/<a href=?(\"|')[^\"']+?(\"|') title=?(\"|')[^\"']+?(\"|')>//g; s/<\/a>//g; s/, /,/g" #author
-            echo "$t1" | hgrep 'td +title @p"%i\n"' | sed 's/.* //' #size
-            echo "$t1" | hgrep 'td +title @p"%i\n"' | sed 's/ .*//; s/[A-Z]/\L&/g;' #extension
-            echo "$t1" | hgrep 'td -title @M"<" @p"%i\n"' | sed 'N;s/.*\n//' #language
+            echo "$t1" | hgrep 'td; a -title | "%i\n"' #name
+            echo "$t1" | hgrep 'ul +class="catalog_authors" | "%i\n"' | sed -E "s/\t//g; /^$/d; s/^<li>//g; s/<li>/,/g; s/<\/li>//g; s/<a href=?(\"|')[^\"']+?(\"|') title=?(\"|')[^\"']+?(\"|')>//g; s/<\/a>//g; s/, /,/g" #author
+            echo "$t1" | hgrep 'td +title | "%i\n"' | sed 's/.* //' #size
+            echo "$t1" | hgrep 'td +title | "%i\n"' | sed 's/ .*//; s/[A-Z]/\L&/g;' #extension
+            echo "$t1" | hgrep 'td -title @M"<" | "%i\n"' | sed 'N;s/.*\n//' #language
             } | recode html..UTF-8 | pastelines 5 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_EXTENSION,$C_LANGUAGE" | nl;;
         2)
-            t1="$(ucurl -s "$DOMAIN/scimag/?q=$SEARCHP&page=$PAGE" | sed 's/<p>volume/volume/' | hgrep 'tbody; tr; td @p"%i\n"')"
-            out_tmp="$(echo "$t1" | hgrep 'ul @p"%i\n"' | sed 's/^<li><a href="//; s/">.*//')"
+            t1="$(ucurl -s "$DOMAIN/scimag/?q=$SEARCHP&page=$PAGE" | sed 's/<p>volume/volume/' | hgrep 'tbody; tr; td | "%i\n"')"
+            out_tmp="$(echo "$t1" | hgrep 'ul | "%i\n"' | sed 's/^<li><a href="//; s/">.*//')"
             {
-            echo "$t1" | hgrep 'p; a @p"%i\n"' | sed 'N; s/\n/ - /;' #name
+            echo "$t1" | hgrep 'p; a | "%i\n"' | sed 'N; s/\n/ - /;' #name
             echo "$t1" | sed -E '/^[^<>]*$/!d' | sed 'N;s/\n.*//' #author
             #echo "$t1" | sed -E '/^[[:space:]]+<p>DOI: [^<>]+<\/p>/!d; s/.*DOI: //; s/<\/p>.*//' #doi
             echo "$t1" | sed '/title="edit metadata">/!d; s/<br>.*//; s/&nbsp;//' #size
@@ -441,9 +441,9 @@ libgen_out() {
     link="$(echo "$out_tmp" | sed "s/ /%20/g; ${NUMBER}q;d")"
     if echo "$link" | grep '://sci-hub' -q
     then
-        ucurl -g -s "$link" | hgrep 'embed @p"%(src)a\n"' | sed 's/^/https:/'
+        ucurl -g -s "$link" | hgrep 'embed | "%(src)a\n"' | sed 's/^/https:/'
     else
-        ucurl -g -s "$link" | hgrep 'h2; a +href @p"%(href)a\n" @l[1]'
+        ucurl -g -s "$link" | hgrep 'h2; a +href @l[1] | "%(href)a\n"'
     fi
 }
 
