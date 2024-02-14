@@ -464,6 +464,8 @@ case "$1" in
 esac
 shift
 
+[ $# -eq 0 ] && { ${basesite}_help; exit 0; }
+
 while [ $# -gt 0 ]
 do
     case "$1" in
