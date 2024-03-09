@@ -325,7 +325,7 @@ nyaa_page() {
     echo "$t1" | hgrep 'td +colspan="2"; a +href="/view/[0-9]*" | "%i\n"' #name
     echo "$t1" | hgrep 'td +class @m"iB$" | "%i\n"' #size
     echo "$t1" | hgrep 'td +class +data-timestamp | "%i\n"' #date
-    t2="$(echo "$t1" | hgrep 'td +class @m"^[0-9]\+$" | "%i\n"' | sed 'N;N; s/\n/,/g')"
+    t2="$(echo "$t1" | hgrep -E 'td +class @m"^[0-9]+$" | "%i\n"' | sed 'N;N; s/\n/,/g')"
     echo "$t2" | cut -d ',' -f1 #se
     echo "$t2" | cut -d ',' -f2 #le
     echo "$t2" | cut -d ',' -f3 #downloaded
@@ -402,7 +402,7 @@ libgen_page() {
     case $MODE in
         0)
             t1="$(ucurl -s "$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT" | tr -d '\r' | hgrep 'table +rules="cols" +width="100%" +border="0"; tr @l[2]')"
-            out_tmp="$(echo "$t1" | hgrep 'td +colspan="2"' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^\?md5=/http:\/\/library.lol\/main\//')" #!!
+            out_tmp="$(echo "$t1" | hgrep 'td +colspan="2"' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
             {
             echo "$t1" | hgrep 'td +colspan="2"; a | "%i\n"' #name
             echo "$t1" | sed -En '/<td><font color="gray">Pages:<\/font><\/td>/{N;s/.*\n//;s/<td>//;s/<\/td>//;s/<br>.*//;s/.*, //;p}' #pages
