@@ -450,9 +450,9 @@ libgen_out() {
     link="$(echo "$out_tmp" | sed "s/ /%20/g; ${NUMBER}q;d")"
     if echo "$link" | grep '://sci-hub' -q
     then
-        ucurl -g -s "$link" | hgrep 'embed | "%(src)a\n"' | sed 's/^/https:/'
+        ucurl -g -s "$link" | reliq 'embed | "%(src)a\n"' | sed 's/^/https:/'
     else
-        ucurl -g -s "$link" | hgrep 'h2; a +href @l[1] | "%(href)a\n"'
+        ucurl -g -s "$link" | reliq 'h2; a href @l[1] | "%(href)v\n"'
     fi
 }
 
