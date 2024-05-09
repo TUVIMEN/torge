@@ -346,7 +346,7 @@ libgen_help() {
     printf "  -S,  --searchby TYPE\t\tsearch by TYPE, that can be: def, name, author, series, publisher, date, isbn, lang, md5, tags, extension\n"
     printf "  -F,  --format FORMAT\t\tspecify file format for results\n"
     printf "  -l,  --language LANG\t\tspecify language for results (only for fiction)\n"
-    printf "  -m,  --mode MODE\t\t\tsearches in choosen MODE which can be: nf|non-fiction, f|fiction, s|science\n"
+    printf "  -m,  --mode MODE\t\tsearches in choosen MODE which can be: nf|non-fiction, f|fiction, s|science\n"
     printf "  -M,  --mask\t\t\tuse wildcards for PATTERN\n"
     printf "  -R,  --results NUM\t\tshow NUM results\n"
 }
@@ -414,7 +414,7 @@ libgen_page() {
             echo "$t1" | sed -E '/<td><font color="gray">Year:<\/font><\/td>/{N; s/[^0-9]+?(([0-9]+)|.*).*/Year:\1/}; /^Year:/!d; s/^Year://' #date
             echo "$t1" | reliq 'td +colspan="3"; b | "%i\n"' | sed -E "s/<a href=?(\"|')[^\"']+?(\"|')>//g; s/<\/a>//g; s/, /,/g" #author
             echo "$t1" | sed -E '/<td><font color="gray">Extension:<\/font><\/td>/{N; s/.*>([a-zA-Z0-9]+).*/Extension:\1/}; /^Extension:/!d; s/^Extension://' #extension
-            } | recode html..UTF-8 | pastelines 6 "$C_NAME,$C_PAGES,$C_SIZE,$C_DATE,$C_AUTHOR,$C_EXTENSION" | nl;;
+            } | pastelines 6 "$C_NAME,$C_PAGES,$C_SIZE,$C_DATE,$C_AUTHOR,$C_EXTENSION" | nl;;
         1)
             [ "$SEARCHBY" = 'def' ] && SEARCHBY=""
             [ "$MASK" -eq 1 ] && MASK=0 || MASK=1
@@ -429,7 +429,7 @@ libgen_page() {
                     td title | "%i\n" / sed "s/ .*//" tr "A-Z" "a-z",
                     td -title c@[0] | "%i\n" / sed "N;s/.*\n//"
                 }
-            ' | recode html..UTF-8 | pastelines 5 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_EXTENSION,$C_LANGUAGE" | nl;;
+            ' | pastelines 5 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_EXTENSION,$C_LANGUAGE" | nl;;
         2)
             t1="$(ucurl -s "$DOMAIN/scimag/?q=$SEARCHP&page=$PAGE")"
             out_tmp="$(echo "$t1" | reliq 'tbody; tr; td; ul; a href [0] | "%(href)v\n"')"
@@ -440,7 +440,7 @@ libgen_page() {
                     td m@"title=\"edit metadata\"" | "%i\n" / sed "s/<.*//;s/&nbsp;//",
                     td; p m@b>"volume" | "%i\n" / sed "s/&nbsp;//g"
                 }
-            ' | recode html..UTF-8 | pastelines 4 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_VOLUME" | nl;;
+            ' | pastelines 4 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_VOLUME" | nl;;
             #echo "$t1" | sed -E '/^[[:space:]]+<p>DOI: [^<>]+<\/p>/!d; s/.*DOI: //; s/<\/p>.*//' #doi
     esac
 }
@@ -449,9 +449,9 @@ libgen_out() {
     link="$(echo "$out_tmp" | sed "s/ /%20/g; ${NUMBER}q;d")"
     if echo "$link" | grep '://sci-hub' -q
     then
-        ucurl -g -s "$link" | reliq 'embed | "%(src)a\n"' | sed 's/^/https:/'
+        ucurl -g -s "$link" | reliq 'embed | "%(src)v\n"' | sed 's/^/https:/'
     else
-        ucurl -g -s "$link" | reliq 'h2; a href @l[1] | "%(href)v\n"'
+        ucurl -g -s "$link" | reliq 'h2; a href l@[1] | "%(href)v\n"'
     fi
 }
 

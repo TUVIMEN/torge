@@ -17,7 +17,6 @@ A shell script for searching for links on torrent sites.
 
  - [reliq](https://github.com/TUVIMEN/reliq)
  - xclip
- - [recode](https://github.com/rrthomas/recode)
 
 ## Installation
 
