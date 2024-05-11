@@ -406,14 +406,16 @@ libgen_page() {
     case $MODE in
         0)
             t1="$(ucurl -s "$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT" | tr -d '\r' | reliq 'table rules=cols width=100% border=0; tr l@[2]')"
-            out_tmp="$(echo "$t1" | reliq 'td +colspan="2"' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
+            out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
             {
-            echo "$t1" | reliq 'td +colspan="2"; a | "%i\n"' #name
-            echo "$t1" | sed -En '/<td><font color="gray">Pages:<\/font><\/td>/{N;s/.*\n//;s/<td>//;s/<\/td>//;s/<br>.*//;s/.*, //;p}' #pages
-            echo "$t1" | sed -E '/<td><font color="gray">Size:<\/font><\/td>/{N; s/[^0-9]+([0-9]+.*) \([0-9]+\).*/Size:\1/}; /^Size:/!d; s/^Size://' #size
-            echo "$t1" | sed -E '/<td><font color="gray">Year:<\/font><\/td>/{N; s/[^0-9]+?(([0-9]+)|.*).*/Year:\1/}; /^Year:/!d; s/^Year://' #date
-            echo "$t1" | reliq 'td +colspan="3"; b | "%i\n"' | sed -E "s/<a href=?(\"|')[^\"']+?(\"|')>//g; s/<\/a>//g; s/, /,/g" #author
-            echo "$t1" | sed -E '/<td><font color="gray">Extension:<\/font><\/td>/{N; s/.*>([a-zA-Z0-9]+).*/Extension:\1/}; /^Extension:/!d; s/^Extension://' #extension
+            echo "$t1" | reliq '
+                td colspan=2; a | "%i\n",
+                td C@"font m@f>\"Pages:\"" ~[0] td | "%i\n" / sed "s/<.*//",
+                td C@"font m@f>\"Size:\"" ~[0] td | "%i\n" / sed "s/ (.*//",
+                td C@"font m@f>\"Year:\"" ~[0] td | "%i\n",
+                td colspan=3; b; { a | "%i," } | sed "s/, /,/g" echo "" "\n",
+                td C@"font m@f>\"Extension:\"" ~[0] td | "%i\n"
+            '
             } | pastelines 6 "$C_NAME,$C_PAGES,$C_SIZE,$C_DATE,$C_AUTHOR,$C_EXTENSION" | nl;;
         1)
             [ "$SEARCHBY" = 'def' ] && SEARCHBY=""
