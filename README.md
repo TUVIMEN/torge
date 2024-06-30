@@ -65,3 +65,24 @@ Search for Lovecraft's fiction in pdf format
 Search search for 'The Road to Serfdom' ordered by size, reversed
 
     torge libgen -r -o size the road to serfdom
+
+My fzf integration that adds magnets to transmission-remote or copies wget command downloading the books into the clipboard
+
+```shell
+ftorge() {
+    res="$(torge "$@" --no-clipboard --no-prompt --choose 'fzf --ansi --multi | cut -f1 | paste -sd ,')"
+    [ "$?" -ne '0' ] && return
+    if [ "$1" = 'libgen' ]
+    then
+        {
+        echo -n 'wget '
+        sed "s/^/'/;s/$/'/" <<< "$res" | paste -sd ' '
+        } | xclip -r -sel clip
+    else
+        for i in $res
+        do
+            transmission-remote -a "$i"
+        done
+    fi
+}
+```

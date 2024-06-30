@@ -5,6 +5,9 @@
 PAGE=1
 SEARCH=""
 DELIM="\t"
+NOPROMPT=""
+NOCLIPBOARD=""
+COMMAND=""
 
 C_LE="31"
 C_SE="32"
@@ -33,8 +36,12 @@ print_help() {
     printf "  -D,  --delimiter DELIM\tset delimiter to DELIM, by default '\\\\t'\n"
     printf "  -p,  --page NUM\t\tshow page at NUM\n"
     printf "  -C,  --no-color\t\tdisable coloring of output\n"
+    printf "       --no-prompt\t\tdo not show prompt\n"
+    printf "       --no-clipboard\t\tdo not copy results to clipboard, just print them to stderr\n"
+    printf "       --choose COMMAND\t\tuse COMMAND to choose\n"
     printf "  -h,  --help\t\t\tshow help\n\n"
     printf "Further help can be found by typing %s SOURCE -h.\n" "$arg0"
+    printf "Selection is done by inputting numbers of lines delimited by spaces or commas\n" "$arg0"
     printf "Output will be copied via xclip.\n"
 }
 
@@ -98,7 +105,7 @@ tpb_settings() {
 tpb_page() {
     t1="$(ucurl -s "$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0" | reliq 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
     out_tmp="$(echo "$t1" | grep -oE 'magnet:\?[^"]+')" #magnet
-    echo "$t1" | reliq '
+    out_lines="$(echo "$t1" | reliq '
         center; a | "%i\n" / sed "N;s/.*\n//",
         font .detDesc | "%i\n" / sed "s/.* Size ([0-9.]+)&nbsp;([^,]+),.*/\1 \2/p" "nE",
         font .detDesc | "%i\n" / sed "s/.*Uploaded //;s/&nbsp;/-/;s/,.*//" "E",
@@ -106,7 +113,7 @@ tpb_page() {
         td align=right | "%i\n" / sed "N; s/\n.*//",
         td align=right | "%i\n" / sed "N; s/.*\n//",
         a .detDesc | "%i\n"
-    ' | pastelines 7 "$C_CATEGORY,$C_SIZE,$C_DATE,$C_NAME,$C_SE,$C_LE,$C_AUTHOR" | nl
+    ' | pastelines 7 "$C_CATEGORY,$C_SIZE,$C_DATE,$C_NAME,$C_SE,$C_LE,$C_AUTHOR")"
 }
 
 tpb_out() {
@@ -136,7 +143,7 @@ lt_settings() {
 lt_page() {
     t1="$(ucurl -g -L -s "$DOMAIN/search/all/$SEARCHP/$SORT/$PAGE/" )"
     out_tmp="$(echo "$t1" | reliq 'td +class="tdleft"; a +href=e>".html" | "'$DOMAIN'%(href)v\n"')"
-    echo "$t1" | reliq '
+    out_lines"$(echo "$t1" | reliq '
         table class=table2; {
             td class=tdleft; a href=e>.html | "%i\n",
             td .tdnormal | "%i\n" / sed "/ - /!d; s/ - .*//",
@@ -145,7 +152,7 @@ lt_page() {
             td .tdleech | "%i\n",
             td .tdright; div | "%(class)v\n"
         }
-    ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_HEALTH" | nl
+    ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_HEALTH")"
 }
 
 lt_out() {
@@ -184,7 +191,7 @@ t1337x_settings() {
 t1337x_page() {
     t1="$(ucurl -s "$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/")"
     out_tmp="$(echo "$t1" | reliq 'tbody; a href=b>/torrent/ | "'$DOMAIN'%(href)v\n"')" #links
-    echo "$t1" | reliq '
+    out_lines="$(echo "$t1" | reliq '
         tbody; {
             a href=b>/torrent/ | "%i\n",
             td .coll-date | "%i\n",
@@ -193,7 +200,7 @@ t1337x_page() {
             td class="coll-3 leeches" | "%i\n",
             td .coll-5; a | "%i\n"
         }
-    ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR" | nl
+    ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR")"
 }
 
 t1337x_out() {
@@ -230,7 +237,7 @@ rarbg_page() {
     t1="$(ucurl -s -L -g "$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES")"
     echo "$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES"
     out_tmp="$(echo "$t1" | reliq 'table .tablelist2; td; a title | "'"$DOMAIN"'%(href)v\n"')" #links
-    echo "$t1" | reliq '
+    out_lines="$(echo "$t1" | reliq '
         table .tablelist2; {
             td; a title | "%i\n",
             td .tlista width=150px c@[0] | "%i\n",
@@ -239,7 +246,7 @@ rarbg_page() {
             td .tlista width=50px c@[0] | "%i\n",
             td .tlista -width align=center | "%i\n"
         }
-    ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR" | nl
+    ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR")"
 }
 
 rarbg_out() {
@@ -324,7 +331,7 @@ nyaa_settings() {
 nyaa_page() {
     t1="$(ucurl -s "$DOMAIN/?f=$FILTER&c=$CATEGORIES&q=$SEARCHP&s=$SORT&o=$RSORT&p=$PAGE")"
     out_tmp="$(echo "$t1" | reliq 'table .torrent-list; td class; a href=b>magnet:? | "%(href)v\n"')"
-    echo "$t1" | reliq '
+    out_lines="$(echo "$t1" | reliq '
         table .torrent-list; {
             a href=B>/?c=[0-9]_[0-9]; img .category-icon alt | "%(alt)v\n",
             td colspan=2; a href=E>/view/[0-9]+ | "%i\n",
@@ -334,7 +341,7 @@ nyaa_page() {
             td class m@E>"^[0-9]+$" | "%i\n" / sed "N;N; s/.*\n(.*)\n.*/\1/" "E",
             td class m@E>"^[0-9]+$" | "%i\n" / sed "N;N; s/.*\n//"
         }
-    ' | pastelines 7 "$C_CATEGORY,$C_NAME,$C_SIZE,$C_DATE,$C_SE,$C_LE,$C_DOWNLOADED" | nl
+    ' | pastelines 7 "$C_CATEGORY,$C_NAME,$C_SIZE,$C_DATE,$C_SE,$C_LE,$C_DOWNLOADED")"
 }
 
 nyaa_out() {
@@ -408,23 +415,21 @@ libgen_page() {
         0)
             t1="$(ucurl -s "$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT" | tr -d '\r' | reliq 'table rules=cols width=100% border=0; tr l@[2]')"
             out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
-            {
-            echo "$t1" | reliq '
+            out_lines="$(echo "$t1" | reliq '
                 td colspan=2; a | "%i\n",
                 td C@"font m@f>\"Pages:\"" ~[0] td | "%i\n" / sed "s/<.*//",
                 td C@"font m@f>\"Size:\"" ~[0] td | "%i\n" / sed "s/ (.*//",
                 td C@"font m@f>\"Year:\"" ~[0] td | "%i\n",
                 td colspan=3; b; { a | "%i," } | sed "s/, /,/g" echo "" "\n",
                 td C@"font m@f>\"Extension:\"" ~[0] td | "%i\n"
-            '
-            } | pastelines 6 "$C_NAME,$C_PAGES,$C_SIZE,$C_DATE,$C_AUTHOR,$C_EXTENSION" | nl;;
+            ' | pastelines 6 "$C_NAME,$C_PAGES,$C_SIZE,$C_DATE,$C_AUTHOR,$C_EXTENSION")";;
         1)
             [ "$SEARCHBY" = 'def' ] && SEARCHBY=""
             [ "$MASK" -eq 1 ] && MASK=0 || MASK=1
 
             t1="$(ucurl -s "$DOMAIN/fiction/?q=$SEARCHP&criteria=$SEARCHBY&language=$LANG&wildcard=$MASK&format=$FORMAT&page=$PAGE")"
             out_tmp="$(echo "$t1" | reliq 'tbody; tr; ul +class="record_mirrors_compact" | "%i\n" / sed "s/^<li><a href=\"//; s/\".*//" "E"')"
-            echo "$t1" | reliq '
+            out_lines="$(echo "$t1" | reliq '
                 tbody; tr; {
                     td; a -title | "%i\n",
                     ul +class="catalog_authors" | "%i\n" / sed "s/\t//g; /^$/d; s/^<li>//g; s/<li>/,/g; s/<\/li>//g; s/<a href=?(\"|'\'')[^\"'\'']+?(\"|'\'') title=?(\"|'\'')[^\"'\'']+?(\"|'\'')>//g; s/<\/a>//g; s/, /,/g" "E",
@@ -432,18 +437,18 @@ libgen_page() {
                     td title | "%i\n" / sed "s/ .*//" tr "A-Z" "a-z",
                     td -title c@[0] | "%i\n" / sed "N;s/.*\n//"
                 }
-            ' | pastelines 5 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_EXTENSION,$C_LANGUAGE" | nl;;
+            ' | pastelines 5 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_EXTENSION,$C_LANGUAGE")";;
         2)
             t1="$(ucurl -s "$DOMAIN/scimag/?q=$SEARCHP&page=$PAGE")"
             out_tmp="$(echo "$t1" | reliq 'tbody; tr; td; ul; a href [0] | "%(href)v\n"')"
-            echo "$t1" | reliq '
+            out_lines="$(echo "$t1" | reliq '
                 tbody; tr; td; {
                     p; a | "%i\n" / sed "N; s/\n/ - /",
                     td -style c@[0] | "%i\n",
                     td m@"title=\"edit metadata\"" | "%i\n" / sed "s/<.*//;s/&nbsp;//",
                     td; p m@b>"volume" | "%i\n" / sed "s/&nbsp;//g"
                 }
-            ' | pastelines 4 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_VOLUME" | nl;;
+            ' | pastelines 4 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_VOLUME")";;
             #echo "$t1" | sed -E '/^[[:space:]]+<p>DOI: [^<>]+<\/p>/!d; s/.*DOI: //; s/<\/p>.*//' #doi
     esac
 }
@@ -458,10 +463,29 @@ libgen_out() {
     fi
 }
 
+get_results() {
+    results="$(for i in $(echo "$2" | sed 's/[,\/|]/ /g' | tr -cd '0-9 \n' | sort -u)
+    do
+        [ -z "i" ] && continue
+        $1 "$i" | if [ -n "$NOCLIPBOARD" ]
+        then
+            head -n1
+        else
+            tee /dev/stderr | head -n1
+        fi
+    done)"
+    if [ -n "$NOCLIPBOARD" ]
+    then
+        echo "$results"
+    else
+        echo "$results" | xclip -r -sel clip
+    fi
+}
+
 if [ "$#" -eq '0' ]
 then
-    print_help
-    exit 0
+    print_help >&2
+    exit 1
 fi
 
 case "$1" in
@@ -471,11 +495,11 @@ case "$1" in
     nyaa) basesite="nyaa";;
     1337x) basesite="t1337x";;
     libgen) basesite="libgen";;
-    *) print_help; exit 0;
+    *) print_help >&2; exit 1;
 esac
 shift
 
-[ $# -eq 0 ] && { ${basesite}_help; exit 0; }
+[ $# -eq 0 ] && { ${basesite}_help; exit 1; }
 
 while [ $# -gt 0 ]
 do
@@ -484,8 +508,8 @@ do
             sort_type="$2"
             shift;;
         -h|--help)
-            ${basesite}_help;
-            exit 0;;
+            ${basesite}_help >&2;
+            exit 1;;
         -r|--reverse)
             sort_reverse='1';;
         -R|--results)
@@ -522,6 +546,13 @@ do
         -D|--delimiter)
             DELIM="$2"
             shift;;
+        --no-prompt)
+            NOPROMPT='1';;
+        --no-clipboard)
+            NOCLIPBOARD='1';;
+        --choose)
+            COMMAND="$2"
+            shift;;
         *)
             if [ -z "$SEARCH" ]
             then
@@ -539,6 +570,16 @@ ${basesite}_settings
 ${basesite}_page
 
 [ -z "$out_tmp" ] && exit 1
-printf 'num> '
-read -r NUMBER
-[ "$NUMBER" -gt 0 ] && ${basesite}_out "$NUMBER" | tee /dev/stderr | head -n1 | tr -d '\n' | xclip -sel clip
+[ -z "$NOPROMPT" ] && printf 'num> '
+
+out_lines="$(echo "$out_lines" | nl)"
+
+if [ -n "$COMMAND" ]
+then
+    NUMBERS="$(echo "$out_lines" | eval "$COMMAND")"
+else
+    echo "$out_lines"
+    read -r NUMBERS
+fi
+
+get_results "${basesite}_out" "$NUMBERS"
