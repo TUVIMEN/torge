@@ -201,7 +201,7 @@ t1337x_out() {
 }
 
 rarbg_help() {
-    printf '  -c,  --categories CATEGORIES\tsearch using CATEGORIES that can be: movies, anime, xxx, tv, apps, games, doc, music, other which can be separated by common delimiters\n'
+    printf '  -c,  --categories CATEGORIES\tsearch one of the categories: movies, anime, xxx, tv, apps, games, doc, music, other\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
 }
@@ -211,7 +211,7 @@ rarbg_searchtrans() {
 }
 
 rarbg_settings() {
-    [ -z "$DOMAIN" ] && DOMAIN="https://rargb.to"
+    [ -z "$DOMAIN" ] && DOMAIN="https://www.rarbgo.to"
     RSORT="ASC"
     SORT=''
     case "$sort_type" in
@@ -223,33 +223,34 @@ rarbg_settings() {
     esac
     [ -z "$sort_reverse" ] && RSORT="DESC"
     [ -n "$SORT" ] && SORT="&order=$SORT&by=$RSORT"
-    [ -n "$categories_type" ] && CATEGORIES=$(echo "$2" | sed -E 's/^/\&category[]=/; s/(,|\/|-|\+|\|)/\&category[]=/g')
+    [ -n "$categories_type" ] && CATEGORIES="&category=$categories_type"
 }
 
 rarbg_page() {
     t1="$(ucurl -s -L -g "$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES")"
-    out_tmp="$(echo "$t1" | reliq 'tr .lista2; td; a +title | "'"$DOMAIN"'%(href)v\n"')" #links
+    echo "$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES"
+    out_tmp="$(echo "$t1" | reliq 'table .tablelist2; td; a title | "'"$DOMAIN"'%(href)v\n"')" #links
     echo "$t1" | reliq '
-        tr .lista2; {
+        table .tablelist2; {
             td; a title | "%i\n",
-            td .lista width=150px c@[0] | "%i\n",
-            td .lista width=100px | "%i\n",
+            td .tlista width=150px c@[0] | "%i\n",
+            td .tlista width=100px | "%i\n",
             font color | "%i\n",
-            td .lista width=50px c@[0] | "%i\n",
-            td .lista -width align=center | "%i\n"
+            td .tlista width=50px c@[0] | "%i\n",
+            td .tlista -width align=center | "%i\n"
         }
     ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR" | nl
 }
 
 rarbg_out() {
-    ucurl -g -s "$(echo "$out_tmp" | sed "$1q;d")" | grep -oE -m 1 'magnet:\?[^"]+' #!!
+    ucurl -g -s "$(echo "$out_tmp" | sed "$1q;d")" | grep -oE -m 1 'magnet:\?[^"]+' #!! cloudflare
 }
 
 nyaa_help() {
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, comments, size, date, se, le, downloads\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
     printf '  -f,  --filter\t\t\tset filter to: no, no-remakes, no-trusted\n'
-    printf '  -c,  --categories\t\tsearch one of categories:\n'
+    printf '  -c,  --categories\t\tsearch one of the categories:\n'
     printf '\t  all\n'
     printf '\t  anime, anime-music-video, anime-english-translated,\n\t  anime-non-english-translated, anime-raw\n'
     printf '\t  audio, audio-lossless, audio-lossy\n'
@@ -346,7 +347,7 @@ libgen_help() {
     printf "  -S,  --searchby TYPE\t\tsearch by TYPE, that can be: def, name, author, series, publisher, date, isbn, lang, md5, tags, extension\n"
     printf "  -F,  --format FORMAT\t\tspecify file format for results\n"
     printf "  -l,  --language LANG\t\tspecify language for results (only for fiction)\n"
-    printf "  -m,  --mode MODE\t\tsearches in choosen MODE which can be: nf|non-fiction, f|fiction, s|science\n"
+    printf "  -m,  --mode MODE\t\tsearches in chosen MODE which can be: nf|non-fiction, f|fiction, s|science\n"
     printf "  -M,  --mask\t\t\tuse wildcards for PATTERN\n"
     printf "  -R,  --results NUM\t\tshow NUM results\n"
 }
