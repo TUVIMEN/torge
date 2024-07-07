@@ -143,7 +143,7 @@ lt_settings() {
 lt_page() {
     t1="$(ucurl -g -L -s "$DOMAIN/search/all/$SEARCHP/$SORT/$PAGE/" )"
     out_tmp="$(echo "$t1" | reliq 'td +class="tdleft"; a +href=e>".html" | "'$DOMAIN'%(href)v\n"')"
-    out_lines"$(echo "$t1" | reliq '
+    out_lines="$(echo "$t1" | reliq '
         table class=table2; {
             td class=tdleft; a href=e>.html | "%i\n",
             td .tdnormal | "%i\n" / sed "/ - /!d; s/ - .*//",
