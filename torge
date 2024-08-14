@@ -570,7 +570,6 @@ ${basesite}_settings
 ${basesite}_page
 
 [ -z "$out_tmp" ] && exit 1
-[ -z "$NOPROMPT" ] && printf 'num> '
 
 out_lines="$(echo "$out_lines" | nl)"
 
@@ -579,6 +578,7 @@ then
     NUMBERS="$(echo "$out_lines" | eval "$COMMAND")"
 else
     echo "$out_lines"
+    [ -z "$NOPROMPT" ] && printf 'num> '
     read -r NUMBERS
 fi
 
