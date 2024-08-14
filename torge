@@ -417,11 +417,11 @@ libgen_page() {
             out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
             out_lines="$(echo "$t1" | reliq '
                 td colspan=2; a | "%i\n",
-                td C@"font m@f>\"Pages:\"" ~[0] td | "%i\n" / sed "s/<.*//",
-                td C@"font m@f>\"Size:\"" ~[0] td | "%i\n" / sed "s/ (.*//",
-                td C@"font m@f>\"Year:\"" ~[0] td | "%i\n",
+                td C@"font m@f>\"Pages:\""; [0] td ssub@ | "%i\n" / sed "s/<.*//",
+                td C@"font m@f>\"Size:\""; [0] td ssub@ | "%i\n" / sed "s/ (.*//",
+                td C@"font m@f>\"Year:\""; [0] td ssub@ | "%i\n",
                 td colspan=3; b; { a | "%i," } | sed "s/, /,/g" echo "" "\n",
-                td C@"font m@f>\"Extension:\"" ~[0] td | "%i\n"
+                td C@"font m@f>\"Extension:\""; [0] td ssub@ | "%i\n"
             ' | pastelines 6 "$C_NAME,$C_PAGES,$C_SIZE,$C_DATE,$C_AUTHOR,$C_EXTENSION")";;
         1)
             [ "$SEARCHBY" = 'def' ] && SEARCHBY=""
