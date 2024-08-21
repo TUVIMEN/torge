@@ -180,8 +180,8 @@ t1337x_settings() {
             name) SORT='';;
             size) SORT='size';;
             date) SORT='time';;
-            se) SORT='seeds';;
-            le) SORT='leechs';;
+            se) SORT='seeders';;
+            le) SORT='leechers';;
         esac
         PSORT="sort-search"
         [ -z "$sort_reverse" ] && RSORT="desc" || RSORT="asc"
@@ -189,7 +189,12 @@ t1337x_settings() {
 }
 
 t1337x_page() {
-    t1="$(ucurl -s "$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/")"
+    llink="$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/"
+    if [ -z "$SORT" ]
+    then
+        llink="$DOMAIN/search/$SEARCHP/$PAGE/"
+    fi
+    t1="$(ucurl -s "$llink")"
     out_tmp="$(echo "$t1" | reliq 'tbody; a href=b>/torrent/ | "'$DOMAIN'%(href)v\n"')" #links
     out_lines="$(echo "$t1" | reliq '
         tbody; {
