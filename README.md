@@ -37,10 +37,17 @@ It's quite beneficial to alias sites in your config to avoid needless typing, he
 
 Just type 'torge source your search', choose what you want and the link will be copied to your clipboard. You can choose multiple results by reparating their line number with space.
 
-Note that some options are specific to certain sites, you can read about it by typing.
+Note that some options are specific to certain sites (like sorting), you can read about it by typing
+
+    torge SOURCE -h
+
+Universal options are described in
+
     torge -h
 
-    torge source -h
+Search sorting by date
+
+    torge 1337x -s date iso
 
 Search for the smallest linux isos on thepiratebay
 

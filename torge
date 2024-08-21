@@ -235,7 +235,6 @@ rarbg_settings() {
 
 rarbg_page() {
     t1="$(ucurl -s -L -g "$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES")"
-    echo "$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES"
     out_tmp="$(echo "$t1" | reliq 'table .tablelist2; td; a title | "'"$DOMAIN"'%(href)v\n"')" #links
     out_lines="$(echo "$t1" | reliq '
         table .tablelist2; {
