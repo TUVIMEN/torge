@@ -94,16 +94,17 @@ tpb_settings() {
         name) SORT='1';;
         date) SORT='3';;
         size) SORT='5';;
-        le) SORT='8';;
-        se) SORT='9';;
+        se) SORT='7';;
+        le) SORT='9';;
         author) SORT='11';;
         category) SORT='13';;
     esac
-    [ -n "$sort_reverse" ] && [ "$sort_type" != "le" -a "$sort_type" != "se" ] && SORT="$(expr "$SORT" + '1')"
+    [ -n "$sort_reverse" ] && SORT="$(expr "$SORT" + '1')"
 }
 
 tpb_page() {
     t1="$(ucurl -s "$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0" | reliq 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
+    echo "$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0"
     out_tmp="$(echo "$t1" | grep -oE 'magnet:\?[^"]+')" #magnet
     out_lines="$(echo "$t1" | reliq '
         center; a | "%i\n" / sed "N;s/.*\n//",
