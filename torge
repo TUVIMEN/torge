@@ -104,7 +104,6 @@ tpb_settings() {
 
 tpb_page() {
     t1="$(ucurl -s "$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0" | reliq 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
-    echo "$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0"
     out_tmp="$(echo "$t1" | grep -oE 'magnet:\?[^"]+')" #magnet
     out_lines="$(echo "$t1" | reliq '
         center; a | "%i\n" / sed "N;s/.*\n//",
