@@ -149,7 +149,7 @@ lt_settings() {
     case "$sort_type" in
         name) SORT='';;
         size) SORT='size';;
-        date) SORT='time';;
+        date) SORT='date';;
         se) SORT='seeds';;
         le) SORT='leechs';;
     esac
