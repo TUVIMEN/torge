@@ -144,7 +144,7 @@ lt_searchtrans() {
 }
 
 lt_settings() {
-    [ -z "$DOMAIN" ] && DOMAIN="https://www.limetorrents.lol/"
+    [ -z "$DOMAIN" ] && DOMAIN="https://www.limetorrents.lol"
     SORT=''
     case "$sort_type" in
         name) SORT='';;
@@ -160,7 +160,7 @@ lt_fields="name,date,size,seeders,leechers,health,link"
 lt_page() {
     origin="$DOMAIN/search/all/$SEARCHP/$SORT/$PAGE/"
     t1="$(ucurl -g -L -s "$origin")"
-    out_tmp="$(echo "$t1" | reliq 'td +class="tdleft"; a +href=e>".html" | "'$DOMAIN'%(href)v\n"')"
+    out_tmp="$(echo "$t1" | reliq 'td +class="tdleft"; a +href=e>".html" | "'$DOMAIN'%(href)v\n"' | sed "s/ /%20/g")"
     out_lines="$(echo "$t1" | reliq '
         table class=table2; {
             td class=tdleft; a href=e>.html | "%i\n",
@@ -178,7 +178,7 @@ lt_link_conv() {
 }
 
 lt_out() {
-    lt_link_conv "$(echo "$out_tmp" | sed "s/ /%20/g; $1q;d")"
+    lt_link_conv "$(echo "$out_tmp" | sed "$1q;d")"
 }
 
 t1337x_help() {
