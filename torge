@@ -9,6 +9,7 @@ NOPROMPT=""
 NOCLIPBOARD=""
 COMMAND=""
 CSV=0
+CSV_HEADER=1
 LINK_CONV=0
 
 C_LE="31"
@@ -41,8 +42,9 @@ print_help() {
     printf "       --no-prompt\t\tdo not show prompt\n"
     printf "       --no-clipboard\t\tdo not copy results to clipboard, just print them to stderr\n"
     printf "       --choose COMMAND\t\tuse COMMAND to choose\n"
-    printf "       --csv\t\t\tprint lines simply delimited by DELIM\n"
-    printf "       --link-conv\t\tconvert links to their real destination (works only with --csv option)\n"
+    printf "       --csv\t\t\tprint lines simply delimited by DELIM, by default the first line will be a csv header\n"
+    printf "       --no-csv-header\t\t\tdo not print csv header\n"
+    printf "       --link-conv\t\tconvert links to their real destination (works only with --csv and --json options)\n"
     printf "  -h,  --help\t\t\tshow help\n\n"
     printf "Further help can be found by typing %s SOURCE -h.\n" "$arg0"
     printf "Selection is done by inputting numbers of lines delimited by spaces or commas\n" "$arg0"
@@ -106,6 +108,8 @@ tpb_settings() {
     [ -n "$sort_reverse" ] && SORT="$(expr "$SORT" + '1')"
 }
 
+tpb_fields="category,size,date,name,seeders,leechers,author,link"
+
 tpb_page() {
     t1="$(ucurl -s "$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0" | reliq 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
     out_tmp="$(echo "$t1" | grep -oE 'magnet:\?[^"]+')" #magnet
@@ -147,6 +151,8 @@ lt_settings() {
         le) SORT='leechs';;
     esac
 }
+
+lt_fields="name,date,size,seeders,leechers,health,link"
 
 lt_page() {
     t1="$(ucurl -g -L -s "$DOMAIN/search/all/$SEARCHP/$SORT/$PAGE/" )"
@@ -199,6 +205,8 @@ t1337x_settings() {
         [ -z "$sort_reverse" ] && RSORT="desc" || RSORT="asc"
     fi
 }
+
+t1337x_fields="name,date,size,seeders,leechers,author,link"
 
 t1337x_page() {
     llink="$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/"
@@ -253,6 +261,8 @@ rarbg_settings() {
     [ -n "$SORT" ] && SORT="&order=$SORT&by=$RSORT"
     [ -n "$categories_type" ] && CATEGORIES="&category=$categories_type"
 }
+
+rarbg_fields="name,date,size,seeders,leechers,author,link"
 
 rarbg_page() {
     t1="$(ucurl -s -L -g "$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES")"
@@ -352,6 +362,8 @@ nyaa_settings() {
     fi
 }
 
+rarbg_fields="category,name,size,date,seeders,leechers,downloaded,link"
+
 nyaa_page() {
     t1="$(ucurl -s "$DOMAIN/?f=$FILTER&c=$CATEGORIES&q=$SEARCHP&s=$SORT&o=$RSORT&p=$PAGE")"
     out_tmp="$(echo "$t1" | reliq 'table .torrent-list; td class; a href=b>magnet:? | "%(href)v\n"')"
@@ -438,6 +450,10 @@ libgen_settings() {
     [ -n "$mask_enable" ] && MASK='0'
 }
 
+libgen_0_fields="name,pages,size,date,author,extension,link"
+libgen_1_fields="name,author,size,extension,language,link"
+libgen_2_fields="name,author,size,volume,link"
+
 libgen_page() {
     case $MODE in
         0)
@@ -520,6 +536,20 @@ link_conv_out() {
     done
 }
 
+conv_to_csv() {
+    [ "$LINK_CONV" -eq 1 ] && out_tmp="$(link_conv_out "$out_tmp")"
+    echo "$out_lines" | awk -v "links_raw=$(echo "$out_tmp" | tr '\n' '\t')" '
+        BEGIN {
+            ORS = ""
+            l=1;
+            split(links_raw,links,"\t");
+        }
+        {
+            print $0, "'"$DELIM"'", links[l++], "\n";
+        }
+    '
+}
+
 if [ "$#" -eq '0' ]
 then
     print_help >&2
@@ -548,9 +578,16 @@ do
         -h|--help)
             ${basesite}_help >&2;
             exit 1;;
+        --no-csv-header)
+            CSV_HEADER=0;;
         --csv)
             COLOR=0
+            JSON=0
             CSV=1;;
+        --json)
+            COLOR=0
+            CSV=0
+            JSON=1;;
         --link-conv)
             LINK_CONV=1;;
         -r|--reverse)
@@ -614,19 +651,11 @@ ${basesite}_page
 
 [ -z "$out_tmp" ] && exit 1
 
+
 if [ "$CSV" -eq 1 ]
 then
-    [ "$LINK_CONV" -eq 1 ] && out_tmp="$(link_conv_out "$out_tmp")"
-    echo "$out_lines" | awk -v "links_raw=$(echo "$out_tmp" | tr '\n' '\t')" '
-        BEGIN {
-            ORS = ""
-            l=1;
-            split(links_raw,links,"\t");
-        }
-        {
-            print $0, "'"$DELIM"'", links[l++], "\n";
-        }
-    '
+    [ "$CSV_HEADER" -eq 1 ] && eval 'echo "$'"${basesite}_fields"'" | tr , "'"$DELIM"'"'
+    conv_to_csv
     exit
 fi
 
