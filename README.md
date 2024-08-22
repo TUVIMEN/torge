@@ -73,6 +73,12 @@ Search search for 'The Road to Serfdom' ordered by size, reversed
 
     torge libgen -r -o size the road to serfdom
 
+Output search results in csv (by default delimited by `\t`, can be changed with `-D` option)
+
+    torge SOURCE --csv -D '\t' your search query
+
+Note that most sites do not store magnet links in search pages and by default the above returns whatever links it finds. If you want to ensure that you get magnet links (or links in case of `libgen`) use `--link-conv` option with `--csv`. Although there will be noticable delay as this will go through all pages (but only if necessary).
+
 My fzf integration that adds magnets to transmission-remote or copies wget command downloading the books into the clipboard
 
 ```shell
