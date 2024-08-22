@@ -44,7 +44,7 @@ print_help() {
     printf "       --no-clipboard\t\tdo not copy results to clipboard, just print them to stderr\n"
     printf "       --choose COMMAND\t\tuse COMMAND to choose\n"
     printf "       --csv\t\t\tprint lines simply delimited by DELIM, by default the first line will be a csv header\n"
-    printf "       --no-csv-header\t\t\tdo not print csv header\n"
+    printf "       --no-csv-header\t\tdo not print csv header\n"
     printf "       --json\t\t\toutput json format\n"
     printf "       --link-conv\t\tconvert links to their real destination (works only with --csv and --json options)\n"
     printf "  -h,  --help\t\t\tshow help\n\n"
