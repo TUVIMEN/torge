@@ -10,6 +10,7 @@ NOCLIPBOARD=""
 COMMAND=""
 CSV=0
 CSV_HEADER=1
+JSON=0
 LINK_CONV=0
 
 C_LE="31"
@@ -44,6 +45,7 @@ print_help() {
     printf "       --choose COMMAND\t\tuse COMMAND to choose\n"
     printf "       --csv\t\t\tprint lines simply delimited by DELIM, by default the first line will be a csv header\n"
     printf "       --no-csv-header\t\t\tdo not print csv header\n"
+    printf "       --json\t\t\toutput json format\n"
     printf "       --link-conv\t\tconvert links to their real destination (works only with --csv and --json options)\n"
     printf "  -h,  --help\t\t\tshow help\n\n"
     printf "Further help can be found by typing %s SOURCE -h.\n" "$arg0"
@@ -111,7 +113,8 @@ tpb_settings() {
 tpb_fields="category,size,date,name,seeders,leechers,author,link"
 
 tpb_page() {
-    t1="$(ucurl -s "$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0" | reliq 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
+    origin="$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0"
+    t1="$(ucurl -s "$origin" | reliq 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
     out_tmp="$(echo "$t1" | grep -oE 'magnet:\?[^"]+')" #magnet
     out_lines="$(echo "$t1" | reliq '
         center; a | "%i\n" / sed "N;s/.*\n//",
@@ -155,7 +158,8 @@ lt_settings() {
 lt_fields="name,date,size,seeders,leechers,health,link"
 
 lt_page() {
-    t1="$(ucurl -g -L -s "$DOMAIN/search/all/$SEARCHP/$SORT/$PAGE/" )"
+    origin="$DOMAIN/search/all/$SEARCHP/$SORT/$PAGE/"
+    t1="$(ucurl -g -L -s "$origin")"
     out_tmp="$(echo "$t1" | reliq 'td +class="tdleft"; a +href=e>".html" | "'$DOMAIN'%(href)v\n"')"
     out_lines="$(echo "$t1" | reliq '
         table class=table2; {
@@ -209,12 +213,12 @@ t1337x_settings() {
 t1337x_fields="name,date,size,seeders,leechers,author,link"
 
 t1337x_page() {
-    llink="$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/"
+    origin="$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/"
     if [ -z "$SORT" ]
     then
-        llink="$DOMAIN/search/$SEARCHP/$PAGE/"
+        origin="$DOMAIN/search/$SEARCHP/$PAGE/"
     fi
-    t1="$(ucurl -s "$llink")"
+    t1="$(ucurl -s "$origin")"
     out_tmp="$(echo "$t1" | reliq 'tbody; a href=b>/torrent/ | "'$DOMAIN'%(href)v\n"')" #links
     out_lines="$(echo "$t1" | reliq '
         tbody; {
@@ -265,7 +269,8 @@ rarbg_settings() {
 rarbg_fields="name,date,size,seeders,leechers,author,link"
 
 rarbg_page() {
-    t1="$(ucurl -s -L -g "$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES")"
+    origin="$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES"
+    t1="$(ucurl -s -L -g "$origin")"
     out_tmp="$(echo "$t1" | reliq 'table .tablelist2; td; a title | "'"$DOMAIN"'%(href)v\n"')" #links
     out_lines="$(echo "$t1" | reliq '
         table .tablelist2; {
@@ -362,10 +367,11 @@ nyaa_settings() {
     fi
 }
 
-rarbg_fields="category,name,size,date,seeders,leechers,downloaded,link"
+nyaa_fields="category,name,size,date,seeders,leechers,downloaded,link"
 
 nyaa_page() {
-    t1="$(ucurl -s "$DOMAIN/?f=$FILTER&c=$CATEGORIES&q=$SEARCHP&s=$SORT&o=$RSORT&p=$PAGE")"
+    origin="$DOMAIN/?f=$FILTER&c=$CATEGORIES&q=$SEARCHP&s=$SORT&o=$RSORT&p=$PAGE"
+    t1="$(ucurl -s "$origin")"
     out_tmp="$(echo "$t1" | reliq 'table .torrent-list; td class; a href=b>magnet:? | "%(href)v\n"')"
     out_lines="$(echo "$t1" | reliq '
         table .torrent-list; {
@@ -457,39 +463,42 @@ libgen_2_fields="name,author,size,volume,link"
 libgen_page() {
     case $MODE in
         0)
-            t1="$(ucurl -s "$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT" | tr -d '\r' | reliq 'table rules=cols width=100% border=0; tr l@[2]')"
+            origin="$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT"
+            t1="$(ucurl -s "$origin" | tr -d '\r' | reliq 'table rules=cols width=100% border=0; tr l@[2]')"
             out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
             out_lines="$(echo "$t1" | reliq '
                 td colspan=2; a | "%i\n",
-                td C@"font m@f>\"Pages:\""; [0] td ssub@ | "%i\n" / sed "s/<.*//",
-                td C@"font m@f>\"Size:\""; [0] td ssub@ | "%i\n" / sed "s/ (.*//",
-                td C@"font m@f>\"Year:\""; [0] td ssub@ | "%i\n",
+                td C@"font m@f>\"Pages:\" l@[1]"; [0] td ssub@ | "%i\n" / sed "s/<.*//",
+                td C@"font m@f>\"Size:\" l@[1]"; [0] td ssub@ | "%i\n" / sed "s/ (.*//",
+                td C@"font m@f>\"Year:\" l@[1]"; [0] td ssub@ | "%i\n",
                 td colspan=3; b; { a | "%i," } | sed "s/, /,/g" echo "" "\n",
-                td C@"font m@f>\"Extension:\""; [0] td ssub@ | "%i\n"
+                td C@"font m@f>\"Extension:\" l@[1]"; [0] td ssub@ | "%i\n"
             ' | pastelines 6 "$C_NAME,$C_PAGES,$C_SIZE,$C_DATE,$C_AUTHOR,$C_EXTENSION")";;
         1)
             [ "$SEARCHBY" = 'def' ] && SEARCHBY=""
             [ "$MASK" -eq 1 ] && MASK=0 || MASK=1
 
-            t1="$(ucurl -s "$DOMAIN/fiction/?q=$SEARCHP&criteria=$SEARCHBY&language=$LANG&wildcard=$MASK&format=$FORMAT&page=$PAGE")"
+            origin="$DOMAIN/fiction/?q=$SEARCHP&criteria=$SEARCHBY&language=$LANG&wildcard=$MASK&format=$FORMAT&page=$PAGE"
+            t1="$(ucurl -s "$origin")"
             out_tmp="$(echo "$t1" | reliq 'tbody; tr; ul +class="record_mirrors_compact" | "%i\n" / sed "s/^<li><a href=\"//; s/\".*//" "E"')"
             out_lines="$(echo "$t1" | reliq '
                 tbody; tr; {
                     td; a -title | "%i\n",
                     ul +class="catalog_authors" | "%i\n" / sed "s/\t//g; /^$/d; s/^<li>//g; s/<li>/,/g; s/<\/li>//g; s/<a href=?(\"|'\'')[^\"'\'']+?(\"|'\'') title=?(\"|'\'')[^\"'\'']+?(\"|'\'')>//g; s/<\/a>//g; s/, /,/g" "E",
-                    td title | "%i\n" / sed "s/.* //",
+                    td title | "%i\n" / sed "s/.* //;s/&nbsp;//g",
                     td title | "%i\n" / sed "s/ .*//" tr "A-Z" "a-z",
                     td -title c@[0] | "%i\n" / sed "N;s/.*\n//"
                 }
             ' | pastelines 5 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_EXTENSION,$C_LANGUAGE")";;
         2)
-            t1="$(ucurl -s "$DOMAIN/scimag/?q=$SEARCHP&page=$PAGE")"
+            origin="$DOMAIN/scimag/?q=$SEARCHP&page=$PAGE"
+            t1="$(ucurl -s "$origin")"
             out_tmp="$(echo "$t1" | reliq 'tbody; tr; td; ul; a href [0] | "%(href)v\n"')"
             out_lines="$(echo "$t1" | reliq '
                 tbody; tr; td; {
                     p; a | "%i\n" / sed "N; s/\n/ - /",
                     td -style c@[0] | "%i\n",
-                    td m@"title=\"edit metadata\"" | "%i\n" / sed "s/<.*//;s/&nbsp;//",
+                    td m@"title=\"edit metadata\"" | "%i\n" / sed "s/<.*//;s/&nbsp;//g",
                     td; p m@b>"volume" | "%i\n" / sed "s/&nbsp;//g"
                 }
             ' | pastelines 4 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_VOLUME")";;
@@ -656,6 +665,37 @@ if [ "$CSV" -eq 1 ]
 then
     [ "$CSV_HEADER" -eq 1 ] && eval 'echo "$'"${basesite}_fields"'" | tr , "'"$DELIM"'"'
     conv_to_csv
+    exit
+fi
+
+gen_jq_fields() {
+    g=0
+    fields_name="${basesite}_fields"
+    [ "$basesite" = "libgen" ] && fields_name="${basesite}_${MODE}_fields"
+
+    fields="$(eval 'echo "$'"${fields_name}"'"')"
+    for i in $(echo "$fields" | tr ',' "\n")
+    do
+        echo "\"$i\": (.[$g] | rtrimstr(\" \") | ltrimstr(\" \")),"
+        g="$(expr "$g" + '1')"
+    done
+}
+
+if [ "$JSON" -eq 1 ]
+then
+    sitename="$basesite"
+    [ "$basesite" = "t1337x" ] && sitename="1337x"
+    [ "$basesite" = "lt" ] && sitename="limetorrents"
+    [ "$basesite" = "tpb" ] && sitename="thepiratebay"
+
+    conv_to_csv | jq -RnMcs --arg link "$origin" --arg site "$sitename" '
+        inputs as $line |
+        { "link": $link, "site": $site, "results": (
+            $line | split("\n")[:-1] | map(split("'"$DELIM"'") | {
+                '"$(gen_jq_fields)"'
+            })
+        ) }
+    '
     exit
 fi
 
