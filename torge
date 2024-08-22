@@ -8,6 +8,8 @@ DELIM="\t"
 NOPROMPT=""
 NOCLIPBOARD=""
 COMMAND=""
+CSV=0
+LINK_CONV=0
 
 C_LE="31"
 C_SE="32"
@@ -39,6 +41,8 @@ print_help() {
     printf "       --no-prompt\t\tdo not show prompt\n"
     printf "       --no-clipboard\t\tdo not copy results to clipboard, just print them to stderr\n"
     printf "       --choose COMMAND\t\tuse COMMAND to choose\n"
+    printf "       --csv\t\t\tprint lines simply delimited by DELIM\n"
+    printf "       --link-conv\t\tconvert links to their real destination (works only with --csv option)\n"
     printf "  -h,  --help\t\t\tshow help\n\n"
     printf "Further help can be found by typing %s SOURCE -h.\n" "$arg0"
     printf "Selection is done by inputting numbers of lines delimited by spaces or commas\n" "$arg0"
@@ -116,6 +120,10 @@ tpb_page() {
     ' | pastelines 7 "$C_CATEGORY,$C_SIZE,$C_DATE,$C_NAME,$C_SE,$C_LE,$C_AUTHOR")"
 }
 
+tpb_link_conv() {
+    echo "$1"
+}
+
 tpb_out() {
     echo "$out_tmp" | sed "$1q;d"
 }
@@ -155,8 +163,12 @@ lt_page() {
     ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_HEALTH")"
 }
 
+lt_link_conv() {
+    ucurl -L -g -s "$1" | grep -oE -m 1 'magnet:\?[^"]+'
+}
+
 lt_out() {
-    ucurl -L -g -s "$(echo "$out_tmp" | sed "s/ /%20/g; $1q;d")" | grep -oE -m 1 'magnet:\?[^"]+'
+    lt_link_conv "$(echo "$out_tmp" | sed "s/ /%20/g; $1q;d")"
 }
 
 t1337x_help() {
@@ -208,8 +220,12 @@ t1337x_page() {
     ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR")"
 }
 
+t1337x_link_conv() {
+    ucurl -g -s "$1" | grep -oE -m 1 'magnet:\?[^"]+'
+}
+
 t1337x_out() {
-    ucurl -g -s "$(echo "$out_tmp" | sed "$1q;d")" | grep -oE -m 1 'magnet:\?[^"]+'
+    t1337x_link_conv "$(echo "$out_tmp" | sed "$1q;d")"
 }
 
 rarbg_help() {
@@ -253,8 +269,12 @@ rarbg_page() {
     ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR")"
 }
 
+rarbg_link_conv() {
+    ucurl -g -s "$1" | grep -oE -m 1 'magnet:\?[^"]+' #!! cloudflare
+}
+
 rarbg_out() {
-    ucurl -g -s "$(echo "$out_tmp" | sed "$1q;d")" | grep -oE -m 1 'magnet:\?[^"]+' #!! cloudflare
+    rarbg_link_conv "$(echo "$out_tmp" | sed "$1q;d")"
 }
 
 nyaa_help() {
@@ -346,6 +366,10 @@ nyaa_page() {
             td class m@E>"^[0-9]+$" | "%i\n" / sed "N;N; s/.*\n//"
         }
     ' | pastelines 7 "$C_CATEGORY,$C_NAME,$C_SIZE,$C_DATE,$C_SE,$C_LE,$C_DOWNLOADED")"
+}
+
+nyaa_link_conv() {
+    echo "$1"
 }
 
 nyaa_out() {
@@ -457,14 +481,17 @@ libgen_page() {
     esac
 }
 
-libgen_out() {
-    link="$(echo "$out_tmp" | sed "s/ /%20/g; ${NUMBER}q;d")"
-    if echo "$link" | grep '://sci-hub' -q
+libgen_link_conv() {
+    if echo "$1" | grep '://sci-hub' -q
     then
-        ucurl -g -s "$link" | reliq 'embed | "%(src)v\n"' | sed 's/^/https:/'
+        ucurl -g -s "$1" | reliq 'embed | "%(src)v\n"' | sed 's/^/https:/'
     else
-        ucurl -g -s "$link" | reliq 'h2; a href l@[1] | "%(href)v\n"'
+        ucurl -g -s "$1" | reliq 'h2; a href l@[1] | "%(href)v\n"'
     fi
+}
+
+libgen_out() {
+    libgen_link_conv "$(echo "$out_tmp" | sed "s/ /%20/g; ${NUMBER}q;d")"
 }
 
 get_results() {
@@ -484,6 +511,13 @@ get_results() {
     else
         echo "$results" | xclip -r -sel clip
     fi
+}
+
+link_conv_out() {
+    for i in $1
+    do
+        ${basesite}_link_conv "$i"
+    done
 }
 
 if [ "$#" -eq '0' ]
@@ -514,6 +548,11 @@ do
         -h|--help)
             ${basesite}_help >&2;
             exit 1;;
+        --csv)
+            COLOR=0
+            CSV=1;;
+        --link-conv)
+            LINK_CONV=1;;
         -r|--reverse)
             sort_reverse='1';;
         -R|--results)
@@ -574,6 +613,22 @@ ${basesite}_settings
 ${basesite}_page
 
 [ -z "$out_tmp" ] && exit 1
+
+if [ "$CSV" -eq 1 ]
+then
+    [ "$LINK_CONV" -eq 1 ] && out_tmp="$(link_conv_out "$out_tmp")"
+    echo "$out_lines" | awk -v "links_raw=$(echo "$out_tmp" | tr '\n' '\t')" '
+        BEGIN {
+            ORS = ""
+            l=1;
+            split(links_raw,links,"\t");
+        }
+        {
+            print $0, "'"$DELIM"'", links[l++], "\n";
+        }
+    '
+    exit
+fi
 
 out_lines="$(echo "$out_lines" | nl)"
 
