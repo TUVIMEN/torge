@@ -50,7 +50,7 @@ print_help() {
     printf "  -h,  --help\t\t\tshow help\n\n"
     printf "Further help can be found by typing %s SOURCE -h.\n" "$arg0"
     printf "Selection is done by inputting numbers of lines delimited by spaces or commas\n" "$arg0"
-    printf "Output will be copied via xclip.\n"
+    printf "Output will be copied via xclip or xsel.\n"
 }
 
 pastelines() {
@@ -522,7 +522,7 @@ libgen_out() {
 get_results() {
     results="$(for i in $(echo "$2" | sed 's/[,\/|]/ /g' | tr -cd '0-9 \n' | sort -u)
     do
-        [ -z "i" ] && continue
+        [ -z "$i" ] && continue
         $1 "$i" | if [ -n "$NOCLIPBOARD" ]
         then
             head -n1
@@ -534,7 +534,9 @@ get_results() {
     then
         echo "$results"
     else
-        echo "$results" | xclip -r -sel clip
+        clipboard_command="xclip -r -sel clip"
+        command -v xclip >/dev/null || clipboard_command='tr "\n" "\t" | sed "s/\t$//;s/\t/\n/g" | xsel -ib'
+        echo "$results" | eval "$clipboard_command"
     fi
 }
 
