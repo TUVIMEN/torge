@@ -89,6 +89,24 @@ pastelines() {
 tpb_help() {
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le, author, category\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
+    printf '  -c,  --categories CATEGORIES\tsearch multiple categories separated by [,/|]:
+\taudio music audio-books sound-clips flac audio-other
+
+\tvideo movies movies-dvdr music-videos movie-clips tv-shows
+\tvideo-handheld hd-movies hd-tv-shows 3d cam-ts uhd-4k-movies
+\tuhd-4k-tv-shows video-other
+
+\tapplications apps-windows apps-mac apps-unix apps-handheld
+\tapps-ios apps-android apps-other
+
+\tgames games-pc games-mac games-psx games-xbox360 games-wii
+\tgames-handheld games-ios games-android games-other
+
+\tporn porn-movies porn-movies porn-pictures porn-games
+\tporn-hd-movies porn-movie-clips porn-uhd/4k-movies
+\tporn-other
+
+\tother e-books comics pictures covers physibles other-other\n'
 }
 
 tpb_searchtrans() {
@@ -107,13 +125,86 @@ tpb_settings() {
         author) SORT='11';;
         category) SORT='13';;
     esac
+
+    CATEGORIES=""
+    for i in $(echo "$categories_type" | tr ',/|' '   ')
+    do
+        case "$i" in
+            audio) CATEGORIES="$CATEGORIES,100";;
+            music) CATEGORIES="$CATEGORIES,101";;
+            audio-books) CATEGORIES="$CATEGORIES,102";;
+            sound-clips) CATEGORIES="$CATEGORIES,103";;
+            flac) CATEGORIES="$CATEGORIES,104";;
+            audio-other) CATEGORIES="$CATEGORIES,199";;
+
+            video) CATEGORIES="$CATEGORIES,200";;
+            movies) CATEGORIES="$CATEGORIES,201";;
+            movies-dvdr) CATEGORIES="$CATEGORIES,202";;
+            music-videos) CATEGORIES="$CATEGORIES,203";;
+            movie-clips) CATEGORIES="$CATEGORIES,204";;
+            tv-shows) CATEGORIES="$CATEGORIES,205";;
+            video-handheld) CATEGORIES="$CATEGORIES,206";;
+            hd-movies) CATEGORIES="$CATEGORIES,207";;
+            hd-tv-shows) CATEGORIES="$CATEGORIES,208";;
+            3d) CATEGORIES="$CATEGORIES,209";;
+            cam-ts) CATEGORIES="$CATEGORIES,210";;
+            uhd-4k-movies) CATEGORIES="$CATEGORIES,211";;
+            uhd-4k-tv-shows) CATEGORIES="$CATEGORIES,212";;
+            video-other) CATEGORIES="$CATEGORIES,299";;
+
+            applications) CATEGORIES="$CATEGORIES,300";;
+            apps-windows) CATEGORIES="$CATEGORIES,301";;
+            apps-mac) CATEGORIES="$CATEGORIES,302";;
+            apps-unix) CATEGORIES="$CATEGORIES,303";;
+            apps-handheld) CATEGORIES="$CATEGORIES,304";;
+            apps-ios) CATEGORIES="$CATEGORIES,305";;
+            apps-android) CATEGORIES="$CATEGORIES,306";;
+            apps-other) CATEGORIES="$CATEGORIES,399";;
+
+            games) CATEGORIES="$CATEGORIES,400";;
+            games-pc) CATEGORIES="$CATEGORIES,401";;
+            games-mac) CATEGORIES="$CATEGORIES,402";;
+            games-psx) CATEGORIES="$CATEGORIES,403";;
+            games-xbox360) CATEGORIES="$CATEGORIES,404";;
+            games-wii) CATEGORIES="$CATEGORIES,405";;
+            games-handheld) CATEGORIES="$CATEGORIES,406";;
+            games-ios) CATEGORIES="$CATEGORIES,407";;
+            games-android) CATEGORIES="$CATEGORIES,408";;
+            games-other) CATEGORIES="$CATEGORIES,499";;
+
+            porn) CATEGORIES="$CATEGORIES,500";;
+            porn-movies) CATEGORIES="$CATEGORIES,501";;
+            porn-movies) CATEGORIES="$CATEGORIES,dvdr 502";;
+            porn-pictures) CATEGORIES="$CATEGORIES,503";;
+            porn-games) CATEGORIES="$CATEGORIES,504";;
+            porn-hd-movies) CATEGORIES="$CATEGORIES,505";;
+            porn-movie-clips) CATEGORIES="$CATEGORIES,506";;
+            porn-uhd-4k-movies) CATEGORIES="$CATEGORIES,507";;
+            porn-other) CATEGORIES="$CATEGORIES,599";;
+
+            other) CATEGORIES="$CATEGORIES,600";;
+            e-books) CATEGORIES="$CATEGORIES,601";;
+            comics) CATEGORIES="$CATEGORIES,602";;
+            pictures) CATEGORIES="$CATEGORIES,603";;
+            covers) CATEGORIES="$CATEGORIES,604";;
+            physibles) CATEGORIES="$CATEGORIES,605";;
+            other-other) CATEGORIES="$CATEGORIES,699";;
+        esac
+    done
+    if [ -z "$CATEGORIES" ]
+    then
+        CATEGORIES='0'
+    else
+        CATEGORIES="$(echo "$CATEGORIES" | cut -b 2-)"
+    fi
+
     [ -n "$sort_reverse" ] && SORT="$(expr "$SORT" + '1')"
 }
 
 tpb_fields="category,size,date,name,seeders,leechers,author,link"
 
 tpb_page() {
-    origin="$DOMAIN/search/$SEARCHP/$PAGE/$SORT/0"
+    origin="$DOMAIN/search/$SEARCHP/$PAGE/$SORT/$CATEGORIES"
     t1="$(ucurl -s "$origin" | reliq 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
     out_tmp="$(echo "$t1" | grep -oE 'magnet:\?[^"]+')" #magnet
     out_lines="$(echo "$t1" | reliq '
@@ -305,7 +396,7 @@ nyaa_help() {
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, comments, size, date, se, le, downloads\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
     printf '  -f,  --filter\t\t\tset filter to: no, no-remakes, no-trusted\n'
-    printf '  -c,  --categories\t\tsearch one of the categories:\n'
+    printf '  -c,  --categories CATEGORIES\tsearch one of the categories:\n'
     printf '\t  all\n'
     printf '\t  anime, anime-music-video, anime-english-translated,\n\t  anime-non-english-translated, anime-raw\n'
     printf '\t  audio, audio-lossless, audio-lossy\n'
