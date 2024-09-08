@@ -182,8 +182,8 @@ lt_out() {
 }
 
 t1337x_help() {
-    printf '  -c,  --categories TYPE\t\tsort using TYPE that can be: movies, tv, games, music, apps\n"'
-    printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n"'
+    printf '  -c,  --categories CATEGORIES\tsearch one of the categories: movies, tv, games, music, apps\n'
+    printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
 }
 
