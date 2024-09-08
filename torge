@@ -182,6 +182,7 @@ lt_out() {
 }
 
 t1337x_help() {
+    printf '  -c,  --categories TYPE\t\tsort using TYPE that can be: movies, tv, games, music, apps\n"'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n"'
     printf "  -r,  --reverse\t\tsort in reverse\n"
 }
@@ -196,7 +197,6 @@ t1337x_settings() {
     then
         SORT=''
         RSORT=""
-        PSORT="search"
     else
         case "$sort_type" in
             name) SORT='';;
@@ -205,18 +205,27 @@ t1337x_settings() {
             se) SORT='seeders';;
             le) SORT='leechers';;
         esac
-        PSORT="sort-search"
         [ -z "$sort_reverse" ] && RSORT="desc" || RSORT="asc"
     fi
+    case "$categories_type" in
+        movies) CATEGORIES="Movies";;
+        tv) CATEGORIES="TV";;
+        games) CATEGORIES="Games";;
+        music) CATEGORIES="Music";;
+        apps) CATEGORIES="Apps";;
+    esac
 }
 
 t1337x_fields="name,date,size,seeders,leechers,author,link"
 
 t1337x_page() {
-    origin="$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/"
-    if [ -z "$SORT" ]
+    if [ -z "$CATEGORIES" ]
     then
-        origin="$DOMAIN/search/$SEARCHP/$PAGE/"
+        origin="$DOMAIN/sort-search/$SEARCHP/$SORT/$RSORT/$PAGE/"
+        [ -z "$SORT" ] && origin="$DOMAIN/search/$SEARCHP/$PAGE/"
+    else
+        origin="$DOMAIN/sort-category-search/$SEARCHP/$CATEGORIES/$SORT/$RSORT/$PAGE/"
+        [ -z "$SORT" ] && origin="$DOMAIN/category-search/$SEARCHP/$CATEGORIES/$PAGE/"
     fi
     t1="$(ucurl -s "$origin")"
     out_tmp="$(echo "$t1" | reliq 'tbody; a href=b>/torrent/ | "'$DOMAIN'%(href)v\n"')" #links
