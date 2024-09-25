@@ -13,6 +13,7 @@ CSV=0
 CSV_HEADER=1
 JSON=0
 LINK_CONV=0
+LATEST=0
 
 C_LE="31"
 C_SE="32"
@@ -100,6 +101,7 @@ pastelines() {
 tpb_help() {
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le, author, category\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
+    printf "       --latest\t\tignore search pattern and show latest torrents\n"
     printf '  -c,  --categories CATEGORIES\tsearch multiple categories separated by [,/|]:
 \taudio music audio-books sound-clips flac audio-other
 
@@ -215,13 +217,18 @@ tpb_settings() {
 tpb_fields="category,size,date,name,seeders,leechers,author,link"
 
 tpb_page() {
-    origin="$DOMAIN/search/$SEARCHP/$PAGE/$SORT/$CATEGORIES"
+    if [ "$LATEST" -eq 1 ]
+    then
+        origin="$DOMAIN/recent/$PAGE"
+    else
+        origin="$DOMAIN/search/$SEARCHP/$PAGE/$SORT/$CATEGORIES"
+    fi
     t1="$(ucurl -s "$origin" | reliq 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
     out_tmp="$(echo "$t1" | grep -oE 'magnet:\?[^"]+')" #magnet
     out_lines="$(echo "$t1" | reliq '
         center; a | "%i\n" / sed "N;s/.*\n//",
         font .detDesc | "%i\n" / sed "s/.* Size ([0-9.]+)&nbsp;([^,]+),.*/\1 \2/p" "nE",
-        font .detDesc | "%i\n" / sed "s/.*Uploaded //;s/&nbsp;/-/;s/,.*//" "E",
+        font .detDesc | "%i\n" / sed "s/.*Uploaded //;s/&nbsp;/-/;s/,.*//; s/<[^>]*>//g;s/&.*//" "E",
         a .detLink title | "%i\n",
         td align=right | "%i\n" / sed "N; s/\n.*//",
         td align=right | "%i\n" / sed "N; s/.*\n//",
@@ -239,6 +246,7 @@ tpb_out() {
 
 lt_help() {
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n"'
+    printf "       --latest\t\tignore search pattern and show latest torrents (--page doesn't work)\n"
 }
 
 lt_searchtrans() {
@@ -260,7 +268,12 @@ lt_settings() {
 lt_fields="name,date,size,seeders,leechers,health,link"
 
 lt_page() {
-    origin="$DOMAIN/search/all/$SEARCHP/$SORT/$PAGE/"
+    if [ "$LATEST" -eq 1 ]
+    then
+        origin="$DOMAIN/latest100"
+    else
+        origin="$DOMAIN/search/all/$SEARCHP/$SORT/$PAGE/"
+    fi
     t1="$(ucurl -g -L -s "$origin")"
     out_tmp="$(echo "$t1" | reliq 'td +class="tdleft"; a +href=e>".html" | "'$DOMAIN'%(href)v\n"' | sed "s/ /%20/g")"
     out_lines="$(echo "$t1" | reliq '
@@ -287,6 +300,7 @@ t1337x_help() {
     printf '  -c,  --categories CATEGORIES\tsearch one of the categories: movies, tv, games, music, apps\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
+    printf "       --latest\t\tignore search pattern and show latest torrents (--page doesn't work)\n"
 }
 
 t1337x_searchtrans() {
@@ -321,13 +335,18 @@ t1337x_settings() {
 t1337x_fields="name,date,size,seeders,leechers,author,link"
 
 t1337x_page() {
-    if [ -z "$CATEGORIES" ]
+    if [ "$LATEST" -eq 1 ]
     then
-        origin="$DOMAIN/sort-search/$SEARCHP/$SORT/$RSORT/$PAGE/"
-        [ -z "$SORT" ] && origin="$DOMAIN/search/$SEARCHP/$PAGE/"
+        origin="$DOMAIN/trending"
     else
-        origin="$DOMAIN/sort-category-search/$SEARCHP/$CATEGORIES/$SORT/$RSORT/$PAGE/"
-        [ -z "$SORT" ] && origin="$DOMAIN/category-search/$SEARCHP/$CATEGORIES/$PAGE/"
+        if [ -z "$CATEGORIES" ]
+        then
+            origin="$DOMAIN/sort-search/$SEARCHP/$SORT/$RSORT/$PAGE/"
+            [ -z "$SORT" ] && origin="$DOMAIN/search/$SEARCHP/$PAGE/"
+        else
+            origin="$DOMAIN/sort-category-search/$SEARCHP/$CATEGORIES/$SORT/$RSORT/$PAGE/"
+            [ -z "$SORT" ] && origin="$DOMAIN/category-search/$SEARCHP/$CATEGORIES/$PAGE/"
+        fi
     fi
     t1="$(ucurl -s "$origin")"
     out_tmp="$(echo "$t1" | reliq 'tbody; a href=b>/torrent/ | "'$DOMAIN'%(href)v\n"')" #links
@@ -355,6 +374,7 @@ rarbg_help() {
     printf '  -c,  --categories CATEGORIES\tsearch one of the categories: movies, anime, xxx, tv, apps, games, doc, music, other\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
+    printf "       --latest\t\tignore search pattern and show latest torrents\n"
 }
 
 rarbg_searchtrans() {
@@ -380,7 +400,12 @@ rarbg_settings() {
 rarbg_fields="name,date,size,seeders,leechers,author,link"
 
 rarbg_page() {
-    origin="$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES"
+    if [ "$LATEST" -eq 1 ]
+    then
+        origin="https://www.rarbgo.to/$PAGE/"
+    else
+        origin="$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES"
+    fi
     t1="$(ucurl -s -L -g "$origin")"
     out_tmp="$(echo "$t1" | reliq 'table .tablelist2; td; a title | "'"$DOMAIN"'%(href)v\n"')" #links
     out_lines="$(echo "$t1" | reliq '
@@ -406,6 +431,7 @@ rarbg_out() {
 nyaa_help() {
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, comments, size, date, se, le, downloads\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
+    printf "       --latest\t\tignore search pattern and show latest torrents\n"
     printf '  -f,  --filter\t\t\tset filter to: no, no-remakes, no-trusted\n'
     printf '  -c,  --categories CATEGORIES\tsearch one of the categories:\n'
     printf '\t  all\n'
@@ -481,7 +507,12 @@ nyaa_settings() {
 nyaa_fields="category,name,size,date,seeders,leechers,downloaded,link"
 
 nyaa_page() {
-    origin="$DOMAIN/?f=$FILTER&c=$CATEGORIES&q=$SEARCHP&s=$SORT&o=$RSORT&p=$PAGE"
+    if [ "$LATEST" -eq 1 ]
+    then
+        origin="$DOMAIN/?p=$PAGE"
+    else
+        origin="$DOMAIN/?f=$FILTER&c=$CATEGORIES&q=$SEARCHP&s=$SORT&o=$RSORT&p=$PAGE"
+    fi
     t1="$(ucurl -s "$origin")"
     out_tmp="$(echo "$t1" | reliq 'table .torrent-list; td class; a href=b>magnet:? | "%(href)v\n"')"
     out_lines="$(echo "$t1" | reliq '
@@ -514,6 +545,7 @@ libgen_help() {
     printf "  -m,  --mode MODE\t\tsearches in chosen MODE which can be: nf|non-fiction, f|fiction, s|science\n"
     printf "  -M,  --mask\t\t\tuse wildcards for PATTERN\n"
     printf "  -R,  --results NUM\t\tshow NUM results\n"
+    printf "       --latest\t\tignore search pattern and show latest uploads\n"
 }
 
 libgen_searchtrans() {
@@ -574,7 +606,12 @@ libgen_2_fields="name,author,size,volume,link"
 libgen_page() {
     case $MODE in
         0)
-            origin="$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT"
+            if [ "$LATEST" -eq 1 ]
+            then
+                origin="$DOMAIN/search.php?mode=last&view=detailed&page=$PAGE&res=$RESULTS"
+            else
+                origin="$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT"
+            fi
             t1="$(ucurl -s "$origin" | tr -d '\r' | reliq 'table rules=cols width=100% border=0; tr l@[2]')"
             out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
             out_lines="$(echo "$t1" | reliq '
@@ -589,7 +626,12 @@ libgen_page() {
             [ "$SEARCHBY" = 'def' ] && SEARCHBY=""
             [ "$MASK" -eq 1 ] && MASK=0 || MASK=1
 
-            origin="$DOMAIN/fiction/?q=$SEARCHP&criteria=$SEARCHBY&language=$LANG&wildcard=$MASK&format=$FORMAT&page=$PAGE"
+            if [ "$LATEST" -eq 1 ]
+            then
+                origin="$DOMAIN/fiction/recent?&page=$PAGE"
+            else
+                origin="$DOMAIN/fiction/?q=$SEARCHP&criteria=$SEARCHBY&language=$LANG&wildcard=$MASK&format=$FORMAT&page=$PAGE"
+            fi
             t1="$(ucurl -s "$origin")"
             out_tmp="$(echo "$t1" | reliq 'tbody; tr; ul +class="record_mirrors_compact" | "%i\n" / sed "s/^<li><a href=\"//; s/\".*//" "E"')"
             out_lines="$(echo "$t1" | reliq '
@@ -602,7 +644,12 @@ libgen_page() {
                 }
             ' | pastelines 5 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_EXTENSION,$C_LANGUAGE")";;
         2)
-            origin="$DOMAIN/scimag/?q=$SEARCHP&page=$PAGE"
+            if [ "$LATEST" -eq 1 ]
+            then
+                origin="$DOMAIN/scimag/recent?page=$PAGE"
+            else
+                origin="$DOMAIN/scimag/?q=$SEARCHP&page=$PAGE"
+            fi
             t1="$(ucurl -s "$origin")"
             out_tmp="$(echo "$t1" | reliq 'tbody; tr; td; ul; a href [0] | "%(href)v\n"')"
             out_lines="$(echo "$t1" | reliq '
@@ -610,7 +657,7 @@ libgen_page() {
                     p; a | "%i\n" / sed "N; s/\n/ - /",
                     td -style c@[0] | "%i\n",
                     td m@"title=\"edit metadata\"" | "%i\n" / sed "s/<.*//;s/&nbsp;//g",
-                    td; p m@b>"volume" | "%i\n" / sed "s/&nbsp;//g"
+                    td; p ( m@b>"volume" )( m@E>"\([0-9]+\)$" ) | "%i\n" / sed "s/&nbsp;//g"
                 }
             ' | pastelines 4 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_VOLUME")";;
             #echo "$t1" | sed -E '/^[[:space:]]+<p>DOI: [^<>]+<\/p>/!d; s/.*DOI: //; s/<\/p>.*//' #doi
@@ -758,6 +805,8 @@ do
         -x|--proxy)
             PROXY="$2"
             shift;;
+        --latest)
+            LATEST=1;;
         *)
             if [ -z "$SEARCH" ]
             then
