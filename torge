@@ -35,12 +35,22 @@ COLOR=1
 
 alias basic_curl='curl -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/5.15.2 Chrome/87.0.4280.144 Safari/537.36" -H "Accept-Encoding: gzip, deflate" --compressed'
 
+curl_no_cf() {
+    t19192="$(basic_curl "$@")"
+    if echo "$t19192" | head -n1 | cut -b 1-71 | grep -Fxq '<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title>'
+    then
+        printf 'blocked by cloudflare\n' >&2
+        exit 1
+    fi
+    echo "$t19192"
+}
+
 ucurl() {
     if [ -z "$PROXY" ]
     then
-        basic_curl "$@"
+        curl_no_cf "$@"
     else
-        basic_curl -x "$PROXY" "$@"
+        curl_no_cf -x "$PROXY" "$@"
     fi
 }
 
