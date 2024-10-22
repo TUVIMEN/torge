@@ -14,6 +14,9 @@ CSV_HEADER=1
 JSON=0
 LINK_CONV=0
 LATEST=0
+COLORS=""
+ARRANGEMENT=""
+ARRANGEMENT_FORMAT=""
 
 C_LE="31"
 C_SE="32"
@@ -58,6 +61,7 @@ print_help() {
     printf "       --no-csv-header\t\tdo not print csv header\n"
     printf "       --json\t\t\toutput json format\n"
     printf "       --link-conv\t\tconvert links to their real destination (works only with --csv and --json options)\n"
+    printf "  -a,  --arrangment FIELDS\tchange arrangement of fields in output, FIELDS is a list of fields separated by common delims,\n\t\t\t\tlist of possible fields can be found in help info of each source.\n"
     printf "  -x,  --proxy PROXY\t\tpass all requests through PROXY\n"
     printf "  -h,  --help\t\t\tshow help\n\n"
     printf "Further help can be found by typing %s SOURCE -h.\n" "$arg0"
@@ -66,16 +70,17 @@ print_help() {
 }
 
 pastelines() {
-    awk -v "fields=$1" -v "raw_colors=$2" 'function print_fields(lines,fields,step,colors) {
+    awk -v "raw_colors=$COLORS" -v "raw_arrangement=$ARRANGEMENT" 'function print_fields(lines,arrangment,alen,step,colors) {
             ORS = ""
             for (i = 0; i < step; i++) {
-                for (j = 0; j < fields; j++) {
-                    if (j != 0)
+                for (j = 2; j <= alen; j++) {
+                    if (j != 2)
                         print "'"$DELIM"'"
+                    k=arrangement[j]
                     if ('"$COLOR"')
-                        print "\033["colors[j+1]"m"lines[(step*j)+i]"\033[0m"
+                        print "\033["colors[k]"m"lines[(step*(k-1))+i]"\033[0m"
                     else
-                        print lines[(step*j)+i]
+                        print lines[(step*(k-1))+i]
                 }
                 printf "\n"
             }
@@ -83,7 +88,8 @@ pastelines() {
 
         BEGIN {
             l=0;
-            split(raw_colors,colors,",");
+            fields = split(raw_colors,colors,",");
+            alen = split(raw_arrangement,arrangement,",");
         }
 
         { lines[l++]=$0 }
@@ -92,13 +98,45 @@ pastelines() {
             if (l >= fields)
             if (l%fields == 0) {
                     step = l/fields
-                    print_fields(lines,fields,step,colors)
+                    print_fields(lines,arrangement,alen,step,colors)
             } else
                 print "length of some data fields does not match the others"
         }'
 }
 
+makefields() {
+    COLORS="$(eval "echo \"$(echo "$1" | sed 's/^/$C_/; s/,/,$C_/g; s/[a-z]/\U&/g')\"")"
+
+    if [ -z "$ARRANGEMENT_FORMAT" ]
+    then
+        ARRANGEMENT=",$(seq "$(echo "$1" | tr ',' '\n' | wc -l)" | paste -sd ',')"
+    else
+        for i in $(echo "$ARRANGEMENT_FORMAT" | sed 's/[A-Z]/\L&/g; s/[ |,/]/\n/g')
+        do
+            if [ -z "$i" ] || echo "$i" | grep -q '[^a-z0-9]'
+            then
+                printf 'unknown character in field "%s"\n' "$i"
+                exit 1
+            fi
+            n="$(echo "$1" | sed -E -n "/((^|,)$i)($|,.*)/!q; s/((^|,)$i)($|,.*)/\\1/; p")"
+            if [ -z "$n" ]
+            then
+                printf 'unknown field "%s" for %s\n' "$i" "$basesite"
+                exit 1
+            fi
+
+            ARRANGEMENT="$ARRANGEMENT,$(echo "$n" | tr ',' '\n' | wc -l)"
+        done
+        if [ -z "$ARRANGEMENT" ]
+        then
+            printf 'empty arrangement\n'
+            exit 1;
+        fi
+    fi
+}
+
 tpb_help() {
+    printf 'Fields: category,size,date,name,se,le,author\n\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le, author, category\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
     printf "       --latest\t\tignore search pattern and show latest torrents\n"
@@ -212,6 +250,8 @@ tpb_settings() {
     fi
 
     [ -n "$sort_reverse" ] && SORT="$(expr "$SORT" + '1')"
+
+    makefields "category,size,date,name,se,le,author"
 }
 
 tpb_fields="category,size,date,name,seeders,leechers,author,link"
@@ -233,7 +273,7 @@ tpb_page() {
         td align=right | "%i\n" / sed "N; s/\n.*//",
         td align=right | "%i\n" / sed "N; s/.*\n//",
         a .detDesc | "%i\n"
-    ' | pastelines 7 "$C_CATEGORY,$C_SIZE,$C_DATE,$C_NAME,$C_SE,$C_LE,$C_AUTHOR")"
+    ' | pastelines)"
 }
 
 tpb_link_conv() {
@@ -245,6 +285,7 @@ tpb_out() {
 }
 
 lt_help() {
+    printf 'Fields: name,date,size,se,le,health\n\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n"'
     printf "       --latest\t\tignore search pattern and show latest torrents (--page doesn't work)\n"
 }
@@ -263,6 +304,7 @@ lt_settings() {
         se) SORT='seeds';;
         le) SORT='leechs';;
     esac
+    makefields "name,date,size,se,le,health"
 }
 
 lt_fields="name,date,size,seeders,leechers,health,link"
@@ -285,7 +327,7 @@ lt_page() {
             td .tdleech | "%i\n",
             td .tdright; div | "%(class)v\n"
         }
-    ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_HEALTH")"
+    ' | pastelines)"
 }
 
 lt_link_conv() {
@@ -297,6 +339,7 @@ lt_out() {
 }
 
 t1337x_help() {
+    printf 'Fields: name,date,size,se,le,author\n\n'
     printf '  -c,  --categories CATEGORIES\tsearch one of the categories: movies, tv, games, music, apps\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
@@ -330,6 +373,7 @@ t1337x_settings() {
         music) CATEGORIES="Music";;
         apps) CATEGORIES="Apps";;
     esac
+    makefields "name,date,size,se,le,author"
 }
 
 t1337x_fields="name,date,size,seeders,leechers,author,link"
@@ -359,7 +403,7 @@ t1337x_page() {
             td class="coll-3 leeches" | "%i\n",
             td .coll-5; a | "%i\n"
         }
-    ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR")"
+    ' | pastelines)"
 }
 
 t1337x_link_conv() {
@@ -371,6 +415,7 @@ t1337x_out() {
 }
 
 rarbg_help() {
+    printf 'Fields: name,date,size,se,le,author\n\n'
     printf '  -c,  --categories CATEGORIES\tsearch one of the categories: movies, anime, xxx, tv, apps, games, doc, music, other\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
@@ -395,6 +440,7 @@ rarbg_settings() {
     [ -z "$sort_reverse" ] && RSORT="DESC"
     [ -n "$SORT" ] && SORT="&order=$SORT&by=$RSORT"
     [ -n "$categories_type" ] && CATEGORIES="&category=$categories_type"
+    makefields "name,date,size,se,le,author"
 }
 
 rarbg_fields="name,date,size,seeders,leechers,author,link"
@@ -417,7 +463,7 @@ rarbg_page() {
             td .tlista width=50px c@[0] | "%i\n",
             td .tlista -width align=center | "%i\n"
         }
-    ' | pastelines 6 "$C_NAME,$C_DATE,$C_SIZE,$C_SE,$C_LE,$C_AUTHOR")"
+    ' | pastelines)"
 }
 
 rarbg_link_conv() {
@@ -429,6 +475,7 @@ rarbg_out() {
 }
 
 nyaa_help() {
+    printf 'Fields: category,name,size,date,se,le,downloaded\n\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, comments, size, date, se, le, downloads\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
     printf "       --latest\t\tignore search pattern and show latest torrents\n"
@@ -502,6 +549,7 @@ nyaa_settings() {
             software-games) CATEGORIES='6_2';;
         esac
     fi
+    makefields "category,name,size,date,se,le,downloaded"
 }
 
 nyaa_fields="category,name,size,date,seeders,leechers,downloaded,link"
@@ -525,7 +573,7 @@ nyaa_page() {
             td class m@E>"^[0-9]+$" | "%i\n" / sed "N;N; s/.*\n(.*)\n.*/\1/" "E",
             td class m@E>"^[0-9]+$" | "%i\n" / sed "N;N; s/.*\n//"
         }
-    ' | pastelines 7 "$C_CATEGORY,$C_NAME,$C_SIZE,$C_DATE,$C_SE,$C_LE,$C_DOWNLOADED")"
+    ' | pastelines)"
 }
 
 nyaa_link_conv() {
@@ -537,6 +585,7 @@ nyaa_out() {
 }
 
 libgen_help() {
+    printf 'Fields for\n  non-fiction: name,pages,size,date,author,extension\n  fiction: name,author,size,extension,language\n  science: name,author,size,volume\n\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: id, name, publisher, date, pages, lang, size, extension\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
     printf "  -S,  --searchby TYPE\t\tsearch by TYPE, that can be: def, name, author, series, publisher, date, isbn, lang, md5, tags, extension\n"
@@ -559,9 +608,10 @@ libgen_settings() {
 
     MODE='0'
     case "$mode_type" in
-        nf|non-fiction) MODE='0';;
-        f|fiction) MODE='1';;
-        s|science) MODE='2';;
+        f|fiction) MODE='1'; makefields "name,author,size,extension,language";;
+        s|science) MODE='2'; makefields "name,author,size,volume";;
+        #nf|non-fiction)
+        *) MODE='0'; makefields "name,pages,size,date,author,extension";;
     esac
 
     SORT=''
@@ -621,7 +671,7 @@ libgen_page() {
                 td C@"font m@f>\"Year:\" l@[1]"; [0] td ssub@ | "%i\n",
                 td colspan=3; b; { a | "%i," } | sed "s/, /,/g" echo "" "\n",
                 td C@"font m@f>\"Extension:\" l@[1]"; [0] td ssub@ | "%i\n"
-            ' | pastelines 6 "$C_NAME,$C_PAGES,$C_SIZE,$C_DATE,$C_AUTHOR,$C_EXTENSION")";;
+            ' | pastelines)";;
         1)
             [ "$SEARCHBY" = 'def' ] && SEARCHBY=""
             [ "$MASK" -eq 1 ] && MASK=0 || MASK=1
@@ -642,7 +692,7 @@ libgen_page() {
                     td title | "%i\n" / sed "s/ .*//" tr "A-Z" "a-z",
                     td -title c@[0] | "%i\n" / sed "N;s/.*\n//"
                 }
-            ' | pastelines 5 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_EXTENSION,$C_LANGUAGE")";;
+            ' | pastelines)";;
         2)
             if [ "$LATEST" -eq 1 ]
             then
@@ -659,7 +709,7 @@ libgen_page() {
                     td m@"title=\"edit metadata\"" | "%i\n" / sed "s/<.*//;s/&nbsp;//g",
                     td; p ( m@b>"volume" )( m@E>"\([0-9]+\)$" ) | "%i\n" / sed "s/&nbsp;//g"
                 }
-            ' | pastelines 4 "$C_NAME,$C_AUTHOR,$C_SIZE,$C_VOLUME")";;
+            ' | pastelines)";;
             #echo "$t1" | sed -E '/^[[:space:]]+<p>DOI: [^<>]+<\/p>/!d; s/.*DOI: //; s/<\/p>.*//' #doi
     esac
 }
@@ -752,10 +802,12 @@ do
         --csv)
             COLOR=0
             JSON=0
+            DELIM="\t"
             CSV=1;;
         --json)
             COLOR=0
             CSV=0
+            DELIM="\t"
             JSON=1;;
         --link-conv)
             LINK_CONV=1;;
@@ -807,6 +859,9 @@ do
             shift;;
         --latest)
             LATEST=1;;
+        -a|--arrangement)
+            ARRANGEMENT_FORMAT="$2"
+            shift;;
         *)
             if [ -z "$SEARCH" ]
             then
@@ -864,7 +919,7 @@ then
     exit
 fi
 
-out_lines="$(echo "$out_lines" | nl)"
+out_lines="$(echo "$out_lines" | nl -w 2 -s "$(printf "$DELIM")")"
 
 if [ -n "$COMMAND" ]
 then
