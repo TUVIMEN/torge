@@ -36,7 +36,7 @@ It's quite beneficial to alias sites in your config to avoid needless typing, he
 
 ## Usage
 
-Just type 'torge source your search', choose what you want and the link will be copied to your clipboard. You can choose multiple results by reparating their line number with space.
+Just type 'torge source your search', choose what you want and the link will be copied to your clipboard. You can choose multiple results by separating their line number with space.
 
 Note that some options are specific to certain sites (like sorting), you can read about it by typing
 
