@@ -23,6 +23,10 @@ A shell script for searching for links on torrent sites.
 
     install -m 755 torge /usr/bin
 
+### AUR
+
+    yay -S torge
+
 ## Aliases
 
 It's quite beneficial to alias sites in your config to avoid needless typing, here's a list of proposed ones:
