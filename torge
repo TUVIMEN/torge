@@ -737,6 +737,20 @@ libgen_out() {
     libgen_link_conv "$(echo "$out_tmp" | sed "s/ /%20/g; ${NUMBER}q;d")"
 }
 
+get_clipboard_command() {
+    clipboard_command=""
+    if command -v xclip >/dev/null
+    then
+        clipboard_command="xclip -r -sel clip"
+        return
+    fi
+    if command -v xsel >/dev/null
+    then
+        clipboard_command='tr "\n" "\t" | sed "s/\t$//;s/\t/\n/g" | xsel -ib'
+        return
+    fi
+}
+
 get_results() {
     results="$(for i in $(echo "$2" | sed 's/[,\/|]/ /g' | tr -cd '0-9 \n' | sort -u)
     do
@@ -752,9 +766,8 @@ get_results() {
     then
         echo "$results"
     else
-        clipboard_command="xclip -r -sel clip"
-        command -v xclip >/dev/null || clipboard_command='tr "\n" "\t" | sed "s/\t$//;s/\t/\n/g" | xsel -ib'
-        echo "$results" | eval "$clipboard_command"
+        get_clipboard_command
+        [ -n "$clipboard_command" ] && echo "$results" | eval "$clipboard_command"
     fi
 }
 

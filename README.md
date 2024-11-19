@@ -16,8 +16,8 @@ A shell script for searching for links on torrent sites.
 ## Requirements
 
  - [reliq](https://github.com/TUVIMEN/reliq)
- - xclip or xsel
- - [jq](https://github.com/jqlang/jq) (only needed for `--json` option)
+ - xclip or xsel (optional, used for clipboard)
+ - [jq](https://github.com/jqlang/jq) (optional, used for `--json` option)
 
 ## Installation
 
