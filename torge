@@ -673,14 +673,15 @@ libgen_page() {
                 origin="$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT"
             fi
             t1="$(ucurl -s "$origin" | tr -d '\r' | reliq 'table rules=cols width=100% border=0; tr l@[2]')"
-            out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
+            #out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
+            out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/libgen.li\/ads.php?md5=/')" #!!
             out_lines="$(echo "$t1" | reliq '
-                td colspan=2; a | "%i\n",
-                td C@"font m@f>\"Pages:\" l@[1]"; [0] td ssub@ | "%i\n" / sed "s/<.*//",
-                td C@"font m@f>\"Size:\" l@[1]"; [0] td ssub@ | "%i\n" / sed "s/ (.*//",
-                td C@"font m@f>\"Year:\" l@[1]"; [0] td ssub@ | "%i\n",
-                td colspan=3; b; { a | "%i," } | sed "s/, /,/g" echo "" "\n",
-                td C@"font m@f>\"Extension:\" l@[1]"; [0] td ssub@ | "%i\n"
+                td colspan=2; a | "%Di\n",
+                font m@f>"Pages:"; td parent@; td [0] ssub@ | "%i\n" / sed "s/<.*//",
+                font m@f>"Size:"; td parent@; td [0] ssub@ | "%i\n" / sed "s/ (.*//",
+                font m@f>"Year:"; td parent@; td [0] ssub@ | "%i\n",
+                td colspan=3; b; { a | "%Di," } | sed "s/, /,/g" echo "" "\n",
+                font m@f>"Extension:"; td parent@; td [0] ssub@ | "%i\n"
             ' | pastelines)";;
         1)
             [ "$SEARCHBY" = 'def' ] && SEARCHBY=""
@@ -693,7 +694,8 @@ libgen_page() {
                 origin="$DOMAIN/fiction/?q=$SEARCHP&criteria=$SEARCHBY&language=$LANG&wildcard=$MASK&format=$FORMAT&page=$PAGE"
             fi
             t1="$(ucurl -s "$origin")"
-            out_tmp="$(echo "$t1" | reliq 'tbody; tr; ul +class="record_mirrors_compact" | "%i\n" / sed "s/^<li><a href=\"//; s/\".*//" "E"')"
+            #out_tmp="$(echo "$t1" | reliq 'tbody; tr; ul +class="record_mirrors_compact" | "%i\n" / sed "s/^<li><a href=\"//; s/\".*//" "E"')"
+            out_tmp="$(echo "$t1" | reliq 'tbody; tr; ul +class="record_mirrors_compact"; a [1] | "%(href)v\n"')"
             out_lines="$(echo "$t1" | reliq '
                 tbody; tr; {
                     td; a -title | "%i\n",
@@ -729,7 +731,8 @@ libgen_link_conv() {
     then
         ucurl -g -s "$1" | reliq 'embed | "%(src)v\n"' | sed 's/^/https:/'
     else
-        ucurl -g -s "$1" | reliq 'h2; a href l@[1] | "%(href)v\n"'
+        #ucurl -g -s "$1" | reliq 'h2; a href l@[1] | "%(href)v\n"'
+        ucurl -g -s "$1" | reliq 'h2; a parent@ href | "https://libgen.li/%(href)v\n"'
     fi
 }
 
