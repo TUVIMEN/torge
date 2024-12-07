@@ -273,17 +273,17 @@ tpb_page() {
     else
         origin="$DOMAIN/search/$SEARCHP/$PAGE/$SORT/$CATEGORIES"
     fi
-    t1="$(ucurl -s "$origin" | reliq 'td' | sed 's/<i>Anonymous<\/i>/<a class="detDesc">Anonymous<\/a>/g')"
+    t1="$(ucurl -s "$origin" | reliq 'tr')"
     out_tmp="$(echo "$t1" | grep -oE 'magnet:\?[^"]+')" #magnet
     out_lines="$(echo "$t1" | reliq '
-        center; a | "%i\n" / sed "N;s/.*\n//",
-        font .detDesc | "%i\n" / sed "s/.* Size ([0-9.]+)&nbsp;([^,]+),.*/\1 \2/p" "nE",
-        font .detDesc | "%i\n" / sed "s/.*Uploaded //;s/&nbsp;/-/;s/,.*//; s/<[^>]*>//g;s/&.*//" "E",
-        a .detLink title | "%i\n",
-        td align=right | "%i\n" / sed "N; s/\n.*//",
-        td align=right | "%i\n" / sed "N; s/.*\n//",
-        a .detDesc | "%i\n"
-    ' | pastelines)"
+        td .vertTh; a | "%Di\n",
+        td align=right m@"&nbsp;" | "%Di\n",
+        td c@[0] -align m@B>"[a-zA-Z-]" | "%Di\n",
+        td a@[0]; a child@ c@[0] href=a>/torrent/ | "%i\n",
+        tr; td [0] c@[0] align=right m@Ef>"[0-9]+" | "%i\n",
+        tr; td [1] c@[0] align=right m@Ef>"[0-9]+" | "%i\n",
+        td a@[0] c@[1]; ( a href=a>/user/ )( i m@f>"Anonymous" ) | "%i\n"
+        ' | pastelines)"
 }
 
 tpb_link_conv() {
