@@ -71,7 +71,7 @@ print_help() {
     printf "       --no-csv-header\t\tdo not print csv header\n"
     printf "       --json\t\t\toutput json format\n"
     printf "       --link-conv\t\tconvert links to their real destination (works only with --csv and --json options)\n"
-    printf "  -a,  --arrangment FIELDS\tchange arrangement of fields in output, FIELDS is a list of fields separated by common delims,\n\t\t\t\tlist of possible fields can be found in help info of each source.\n"
+    printf "  -a,  --arrangement FIELDS\tchange arrangement of fields in output, FIELDS is a list of fields separated by common delims,\n\t\t\t\tlist of possible fields can be found in help info of each source.\n"
     printf "  -x,  --proxy PROXY\t\tpass all requests through PROXY\n"
     printf "  -h,  --help\t\t\tshow help\n\n"
     printf "Further help can be found by typing %s SOURCE -h.\n" "$arg0"
@@ -80,7 +80,7 @@ print_help() {
 }
 
 pastelines() {
-    awk -v "raw_colors=$COLORS" -v "raw_arrangement=$ARRANGEMENT" 'function print_fields(lines,arrangment,alen,step,colors) {
+    awk -v "raw_colors=$COLORS" -v "raw_arrangement=$ARRANGEMENT" 'function print_fields(lines,arrangement,alen,step,colors) {
             ORS = ""
             for (i = 0; i < step; i++) {
                 for (j = 2; j <= alen; j++) {
