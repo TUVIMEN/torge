@@ -278,7 +278,7 @@ tpb_page() {
     out_lines="$(echo "$t1" | reliq '
         td .vertTh; a | "%Di\n",
         td align=right m@"&nbsp;" | "%Di\n",
-        td ( c@[0] )( c@[1] C@"b" ) -align m@B>"[a-zA-Z-]"; * c@[0] | "%Di\n",
+        td c@[:1] -align m@B>"[a-zA-Z-]"; ( * l@[0] )( b ) [0] c@[0] | "%Di\n",
         td a@[0]; { a child@  href=a>/torrent/ | "%Dt\n" || span .__cf_email__ desc@; a parent@ href=a>/torrent/ | "%Dt\n" },
         tr; td [0] c@[0] align=right m@Ef>"[0-9]+" | "%i\n",
         tr; td [1] c@[0] align=right m@Ef>"[0-9]+" | "%i\n",
