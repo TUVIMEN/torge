@@ -8,7 +8,7 @@ A shell script for searching for links on torrent sites.
 
  - thepiratebay
  - limetorrents
- - rarbg (as for now getting magnet link is being blocked by cloudflare)
+ - rarbg (you might get blocked by cloudflare when getting magnet links)
  - nyaa
  - 1337x
  - libgen
