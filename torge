@@ -603,8 +603,8 @@ libgen_help() {
     printf "  -l,  --language LANG\t\tspecify language for results (only for fiction)\n"
     printf "  -m,  --mode MODE\t\tsearches in chosen MODE which can be: nf|non-fiction, f|fiction, s|science\n"
     printf "  -M,  --mask\t\t\tuse wildcards for PATTERN\n"
-    printf "  -R,  --results NUM\t\tshow NUM results\n"
-    printf "       --latest\t\tignore search pattern and show latest uploads\n"
+    printf "  -R,  --results NUM\t\tshow NUM results, can be set to 25, 50 and 100\n"
+    printf "       --latest\t\t\tignore search pattern and show latest uploads\n"
 }
 
 libgen_searchtrans() {
@@ -672,6 +672,7 @@ libgen_page() {
             else
                 origin="$DOMAIN/search.php?req=$SEARCHP&open=0&res=$RESULTS&view=detailed&phrase=$MASK&column=$SEARCHBY&page=$PAGE&sort=$SORT&sortmode=$RSORT"
             fi
+
             t1="$(ucurl -s "$origin" | tr -d '\r' | reliq 'table rules=cols width=100% border=0; tr l@[2]')"
             #out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
             out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/libgen.li\/ads.php?md5=/')" #!!
@@ -840,7 +841,7 @@ do
         -r|--reverse)
             sort_reverse='1';;
         -R|--results)
-            RESULTS="$1"
+            RESULTS="$2"
             shift;;
         -f|--filter)
             filter_type="$2"
@@ -909,7 +910,15 @@ ${basesite}_page
 
 if [ "$CSV" -eq 1 ]
 then
-    [ "$CSV_HEADER" -eq 1 ] && eval 'echo "$'"${basesite}_fields"'" | tr , "'"$DELIM"'"'
+    if [ "$CSV_HEADER" -eq 1 ]
+    then
+        if [ "$basesite" = "libgen" ]
+        then
+            eval 'echo "$'"${basesite}_${MODE}_fields"'" | tr , "'"$DELIM"'"'
+        else
+            eval 'echo "$'"${basesite}_fields"'" | tr , "'"$DELIM"'"'
+        fi
+    fi
     conv_to_csv
     exit
 fi
