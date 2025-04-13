@@ -115,6 +115,9 @@ test_tpb() {
     echo tpb latest
     tpb --latest >/dev/null
 
+    echo tpb magnets
+    assert "$(tpb the -s se | field 8 | grep '\<magnet:?' | wc -l)" -ge 30
+
     echo tpb categories
     local t="$(tpb -c audio,other -s se the)"
     assert "$(echo "$t" | field 1 | grep '^Audio > Music' | wc -l)" -ge 5
@@ -133,6 +136,9 @@ test_lt() {
 
     echo lt le
     assert "$(lt -s le lord of the rings | field 5 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 18
+
+    echo lt magnets "(might take some time)"
+    assert "$(lt --link-conv the -s se | field 7 | grep '\<magnet:?' | wc -l)" -ge 40
 
     echo lt latest
     lt 150 --latest >/dev/null
@@ -162,6 +168,9 @@ test_1337x() {
     echo 1337x reverse le
     assert "$(t1337x -s le -r the | field 5 | grep -Fx '0' | wc -l)" -ge 15
 
+    echo 1337x magnets "(might take some time)"
+    assert "$(t1337x --link-conv the -s se | field 7 | grep '\<magnet:?' | wc -l)" -ge 20
+
     echo 1337x latest
     t1337x 42 --latest >/dev/null
 
@@ -172,7 +181,6 @@ test_1337x() {
 test_tpb
 test_lt
 test_1337x
-
 
 
 
