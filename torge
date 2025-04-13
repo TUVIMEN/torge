@@ -296,7 +296,7 @@ tpb_out() {
 
 lt_help() {
     printf 'Fields: name,date,size,se,le,health\n\n'
-    printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n"'
+    printf '  -s,  --sort TYPE\tsort using TYPE that can be: name, size, date, se, le\n'
     printf "       --latest\t\tignore search pattern and show latest torrents (--page doesn't work)\n"
 }
 
@@ -333,8 +333,8 @@ lt_page() {
             td class=tdleft; a href=e>.html | "%i\n",
             td .tdnormal | "%i\n" / sed "/ - /!d; s/ - .*//",
             td .tdnormal | "%i\n" / sed "/ - /d",
-            td .tdseed | "%i\n",
-            td .tdleech | "%i\n",
+            td .tdseed | "%i\n" tr ",",
+            td .tdleech | "%i\n" tr ",",
             td .tdright; div | "%(class)v\n"
         }
     ' | pastelines)"
