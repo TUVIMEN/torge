@@ -256,52 +256,90 @@ test_nyaa() {
     assert "$(nyaa -c live-action-idol-promotional-video -s se a | field 1 | grep -F 'Live Action - Idol/Promotional Video' | wc -l)" -ge 70
 }
 
+#libgen should be split into subcommands
+test_libgen_nf() {
+    echo libgen_nf standard
+    libgen_nf name >/dev/null
+
+    echo libgen_nf 100 results
+    libgen_nf 100 -R 100 name >/dev/null
+
+    echo libgen_nf size
+    assert "$(libgen_nf -s size name | field 3 | grep -E '^[0-9]{,3} Kb' | wc -l)" -ge 20
+    echo libgen_nf reverse size
+    assert "$(libgen_nf -s size -r name | field 3 | grep -E '^[0-9]{2,} Mb' | wc -l)" -ge 18
+
+    echo libgen_nf reverse pages
+    assert "$(libgen_nf  name -s pages -r | field 2 | grep -E '^[0-9]{3,}\>' | wc -l)" -ge 18
+
+    echo libgen_nf extension
+    assert "$(libgen_nf  name -s extension | field 6 | grep 'azw3' | wc -l)" -ge 10
+
+    echo libgen_nf search by date
+    assert "$(libgen_nf -S date 2025 | field 4 | grep "$(date +%Y)" | wc -l)" -ge 25
+
+    echo libgen_nf search by author
+    assert "$(libgen_nf -S author lovecraft | field 5 | grep -i lovecraft | wc -l)" -ge 25
+
+    echo libgen_nf search by lang
+    libgen_nf -S lang french >/dev/null
+
+    echo libgen_nf search by publisher
+    libgen_nf -S publisher Scholastic >/dev/null
+
+    echo libgen_nf search by tags
+    libgen_nf -S tags blood >/dev/null
+
+    echo libgen_nf search by series
+    libgen_nf -S series time >/dev/null
+
+    echo libgen_nf search by md5
+    libgen_nf 1 -S md5 6F7C9AADD70E6F15531F41505B95E3C6 >/dev/null
+
+    echo libgen_nf search by isbn
+    libgen_nf 5 -S isbn 9783540332589 >/dev/null
+
+    echo libgen_nf latest
+    libgen_nf --latest >/dev/null
+
+    echo libgen_nf links
+    assert "$(libgen_nf --link-conv name | field 7 | grep '\<https://' | wc -l)" -ge 25
+}
+
+test_libgen_f() {
+    echo libgen_f standard
+    libgen_f list >/dev/null
+
+    echo libgen_f search by title
+    libgen_f -S title love >/dev/null
+
+    echo libgen_f search by series
+    libgen_f -S series blind >/dev/null
+
+    echo libgen_f latest
+    libgen_f --latest >/dev/null
+
+    echo libgen_f links
+    assert "$(libgen_f --link-conv list | field 6 | grep '\<https://' | wc -l)" -ge 25
+}
+
+#this should be rebuild completely
+test_libgen_s() {
+    echo libgen_s standard
+    libgen_s list >/dev/null
+
+    #echo libgen_s latest
+    #libgen_s --latest >/dev/null
+
+    echo libgen_s links
+    assert "$(libgen_s --link-conv list | field 5 | grep '\<https://' | wc -l)" -ge 25
+}
+
 test_tpb
 test_lt
 test_1337x
 test_rarbg
 test_nyaa
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+test_libgen_nf
+test_libgen_f
+test_libgen_s
