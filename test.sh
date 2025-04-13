@@ -120,4 +120,69 @@ test_tpb() {
     assert "$(echo "$t" | field 1 | grep '^Other > E-books' | wc -l)" -ge 10
 }
 
+test_lt() {
+    echo lt standard
+    lt lord of the rings >/dev/null
+
+    echo lt date
+    assert "$(lt -s date lord of the rings | field 2 | grep -E '\<(ago|last)\>' | wc -l)" -ge 30
+
+    echo lt se
+    assert "$(lt -s se lord of the rings | field 4 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 25
+
+    echo lt le
+    assert "$(lt -s le lord of the rings | field 5 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 18
+
+    echo lt health
+    assert "$(lt -s health the | field 6 | grep '\<hb[4-8]\>' | wc -l)" -ge 8
+
+    lt 150 --latest >/dev/null
+}
+
 test_tpb
+test_lt
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
