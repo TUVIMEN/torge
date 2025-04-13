@@ -429,7 +429,7 @@ rarbg_help() {
     printf '  -c,  --categories CATEGORIES\tsearch one of the categories: movies, anime, xxx, tv, apps, games, doc, music, other\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
-    printf "       --latest\t\tignore search pattern and show latest torrents\n"
+    printf "       --latest\t\t\tignore search pattern and show latest torrents\n"
 }
 
 rarbg_searchtrans() {
