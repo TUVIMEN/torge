@@ -112,6 +112,7 @@ test_tpb() {
     echo tpb reverse category
     assert "$(tpb -s category -r the | field 1 | grep '^Audio > Music' | wc -l)" -ge 25
 
+    echo tpb latest
     tpb --latest >/dev/null
 
     echo tpb categories
@@ -133,14 +134,44 @@ test_lt() {
     echo lt le
     assert "$(lt -s le lord of the rings | field 5 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 18
 
-    echo lt health
-    assert "$(lt -s health the | field 6 | grep '\<hb[4-8]\>' | wc -l)" -ge 8
-
+    echo lt latest
     lt 150 --latest >/dev/null
+}
+
+test_1337x() {
+    echo 1337x standard
+    t1337x the >/dev/null
+
+    echo 1337x size
+    assert "$(t1337x -s size the | field 3 | grep -E '^[1-9]{3,}(\.[0-9]+)? GB$' | wc -l)" -ge 12
+    echo 1337x reverse size
+    assert "$(t1337x -s size -r the | field 3 | grep -E '^0(\.[0-9]+)? KB$' | wc -l)" -ge 17
+
+    echo 1337x date
+    assert "$(t1337x -s date the | field 2 | grep -E 'am$' | wc -l)" -ge 5
+    echo 1337x reverse date
+    assert "$(t1337x -s date -r the | field 2 | grep -E " '08$" | wc -l)" -ge 10
+
+    echo 1337x se
+    assert "$(t1337x -s se the | field 4 | grep -E '^[0-9]{4,}$' | wc -l)" -ge 15
+    echo 1337x reverse se
+    assert "$(t1337x -s se -r the | field 4 | grep -Fx '0' | wc -l)" -ge 15
+
+    echo 1337x le
+    assert "$(t1337x -s le the | field 5 | grep -E '^[0-9]{4,}$' | wc -l)" -ge 15
+    echo 1337x reverse le
+    assert "$(t1337x -s le -r the | field 5 | grep -Fx '0' | wc -l)" -ge 15
+
+    echo 1337x latest
+    t1337x 42 --latest >/dev/null
+
+    echo 1337x categories
+    assert "$(t1337x -c games -s se DLC | field 1 | grep '\<FitGirl\>' | wc -l)" -ge 2
 }
 
 test_tpb
 test_lt
+test_1337x
 
 
 

@@ -149,7 +149,7 @@ tpb_help() {
     printf 'Fields: category,size,date,name,se,le,author\n\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le, author, category\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
-    printf "       --latest\t\tignore search pattern and show latest torrents\n"
+    printf "       --latest\t\t\tignore search pattern and show latest torrents\n"
     printf '  -c,  --categories CATEGORIES\tsearch multiple categories separated by [,/|]:
 \taudio music audio-books sound-clips flac audio-other
 
