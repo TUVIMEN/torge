@@ -488,7 +488,7 @@ nyaa_help() {
     printf 'Fields: category,name,size,date,se,le,downloaded\n\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, comments, size, date, se, le, downloads\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
-    printf "       --latest\t\tignore search pattern and show latest torrents\n"
+    printf "       --latest\t\t\tignore search pattern and show latest torrents\n"
     printf '  -f,  --filter\t\t\tset filter to: no, no-remakes, no-trusted\n'
     printf '  -c,  --categories CATEGORIES\tsearch one of the categories:\n'
     printf '\t  all\n'
@@ -577,7 +577,7 @@ nyaa_page() {
         table .torrent-list; {
             a href=B>/?c=[0-9]_[0-9]; img .category-icon alt | "%(alt)v\n",
             td colspan=2; a href=E>/view/[0-9]+ | "%i\n",
-            td class i@e>"iB" | "%i\n",
+            td class i@eE>"(iB| Bytes)" | "%i\n",
             td class data-timestamp | "%i\n",
             td class i@E>"^[0-9]+$" | "%i\n" / sed "N;N; s/\n.*//",
             td class i@E>"^[0-9]+$" | "%i\n" / sed "N;N; s/.*\n(.*)\n.*/\1/" "E",
