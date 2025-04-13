@@ -188,9 +188,9 @@ test_rarbg() {
     assert "$(rarbg -s size -r the | field 3 | grep -E '^0(\.[0-9]+)? KB$' | wc -l)" -ge 18
 
     echo rarbg date
-    assert "$(rarbg -s date the | field 2 | grep -E "$(date "+%Y-%m-%d")"| wc -l)" -ge 1
+    assert "$(rarbg -s date the | field 2 | grep -E "$(date "+%Y-%m-%d")" | wc -l)" -ge 1
     echo rarbg reverse date
-    assert "$(rarbg -s date -r the | field 2 | grep -E '1970-' | wc -l)" -ge 4
+    assert "$(rarbg -s date -r the | field 2 | grep '1970-' | wc -l)" -ge 4
 
     echo rarbg se
     assert "$(rarbg -s se the | field 4 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 18
@@ -212,10 +212,55 @@ test_rarbg() {
     assert "$(rarbg -c apps -s se the | field 1 | grep -F '{CracksHash}' | wc -l)" -ge 3
 }
 
+test_nyaa() {
+    echo nyaa standard
+    nyaa list >/dev/null
+
+    echo nyaa comments
+    assert "$(nyaa -s comments a | field 2 | grep ' Dragon Ball ' | wc -l)" -ge 3
+    echo nyaa reverse comments
+    nyaa -s comments -r list >/dev/null
+
+    echo nyaa size
+    assert "$(nyaa -s size a | field 3 | grep -E '(^[0-9]{3}(\.[0-9]+)? GiB$| TiB$)' | wc -l)" -ge 50
+    echo nyaa reverse size
+    assert "$(nyaa -s size -r a | field 3 | grep -E '^[0-9]+ Bytes$' | wc -l)" -ge 18
+
+    echo nyaa date
+    assert "$(nyaa -s date a | field 4 | grep -E "$(date "+%Y-%m-%d")"| wc -l)" -ge 4
+    echo nyaa reverse date
+    assert "$(nyaa -s date -r a | field 4 | grep -E '^2008-06-23\>' | wc -l)" -ge 30
+
+    echo nyaa se
+    assert "$(nyaa -s se a | field 5 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 40
+    echo nyaa reverse se
+    assert "$(nyaa -s se -r a | field 5 | grep -Fx '0' | wc -l)" -ge 40
+
+    echo nyaa le
+    assert "$(nyaa -s le a | field 6 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 8
+    echo nyaa reverse le
+    assert "$(nyaa -s le -r a | field 6 | grep -Fx '0' | wc -l)" -ge 40
+
+    echo nyaa downloads
+    assert "$(nyaa -s downloads a | field 7 | grep -E '\<[0-9]{5,}\>' | wc -l)" -ge 60
+    echo nyaa reverse downloads
+    assert "$(nyaa -s downloads -r a | field 7 | grep -E '\<0\>' | wc -l)" -ge 60
+
+    echo nyaa latest
+    nyaa --latest >/dev/null
+
+    echo nyaa magnets
+    assert "$(nyaa the -s se | field 8 | grep '\<magnet:?' | wc -l)" -ge 75
+
+    echo nyaa categories
+    assert "$(nyaa -c live-action-idol-promotional-video -s se a | field 1 | grep -F 'Live Action - Idol/Promotional Video' | wc -l)" -ge 70
+}
+
 test_tpb
 test_lt
 test_1337x
 test_rarbg
+test_nyaa
 
 
 
