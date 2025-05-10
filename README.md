@@ -80,7 +80,7 @@ Search search for 'The Road to Serfdom' ordered by size, reversed
 
 Show only name, seeds and date searching for linux
 
-    torge limetorrents -a name,seeds,date linux
+    torge limetorrents -a name,se,date linux
 
 Output search results in csv (by default delimited by `\t`, can be changed with `-D` option)
 
