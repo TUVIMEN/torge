@@ -357,7 +357,7 @@ t1337x_help() {
 }
 
 t1337x_searchtrans() {
-    tr ' .+/_:;' '-'
+    tr ' ./-_:;' '+'
 }
 
 t1337x_settings() {
