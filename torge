@@ -361,7 +361,7 @@ t1337x_searchtrans() {
 }
 
 t1337x_settings() {
-    [ -z "$DOMAIN" ] && DOMAIN="https://www.1337xx.to"
+    [ -z "$DOMAIN" ] && DOMAIN="https://www.1337x.to"
     if [ -z "$sort_type" ]
     then
         SORT=''
