@@ -684,7 +684,7 @@ libgen_page() {
 
             t1="$(ucurl -s "$origin" | tr -d '\r' | reliq 'table rules=cols width=100% border=0; tr l@[2]')"
             #out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/library.lol\/main\//')" #!!
-            out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/http:\/\/libgen.li\/ads.php?md5=/')" #!!
+            out_tmp="$(echo "$t1" | reliq 'td colspan=2' | grep -oE '\?md5=[A-Z0-9]+' | sed 's/^?md5=/https:\/\/libgen.li\/ads.php?md5=/')" #!!
             out_lines="$(echo "$t1" | reliq '
                 td colspan=2; a | "%Di\n",
                 font i@f>"Pages:"; td parent@; td [0] ssub@ | "%i\n" / sed "s/<.*//",
@@ -737,12 +737,13 @@ libgen_page() {
 }
 
 libgen_link_conv() {
-    if echo "$1" | grep '://sci-hub' -q
+    if echo "$1" | grep -F '://sci-hub.' -q
     then
-        ucurl -g -s "$1" | reliq 'embed | "%(src)v\n"' | sed 's/^/https:/'
+        echo "$1"
+        # blocked by their "protection"
+        #ucurl -g -s "$1" | reliq 'embed | "%(src)v\n"' | sed 's/^/https:/'
     else
-        #ucurl -g -s "$1" | reliq 'h2; a href l@[1] | "%(href)v\n"'
-        ucurl -g -s "$1" | reliq 'h2; a parent@ href | "https://libgen.li/%(href)v\n"'
+        ucurl -g -L -s "$1" | reliq 'h2; a parent@ href | "https://libgen.li/%(href)v\n"'
     fi
 }
 
