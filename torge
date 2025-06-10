@@ -361,7 +361,7 @@ t1337x_searchtrans() {
 }
 
 t1337x_settings() {
-    [ -z "$DOMAIN" ] && DOMAIN="https://www.1337x.to"
+    [ -z "$DOMAIN" ] && DOMAIN="https://www.1337xx.to"
     if [ -z "$sort_type" ]
     then
         SORT=''
@@ -395,8 +395,11 @@ t1337x_page() {
     else
         if [ -z "$CATEGORIES" ]
         then
+            # the honeypot site blocks the standard /search/
+            [ -z "$SORT" ] && SORT="seeders" && RSORT="desc"
             origin="$DOMAIN/sort-search/$SEARCHP/$SORT/$RSORT/$PAGE/"
-            [ -z "$SORT" ] && origin="$DOMAIN/search/$SEARCHP/$PAGE/"
+
+            # [ -z "$SORT" ] && origin="$DOMAIN/search/$SEARCHP/$PAGE/"
         else
             origin="$DOMAIN/sort-category-search/$SEARCHP/$CATEGORIES/$SORT/$RSORT/$PAGE/"
             [ -z "$SORT" ] && origin="$DOMAIN/category-search/$SEARCHP/$CATEGORIES/$PAGE/"
