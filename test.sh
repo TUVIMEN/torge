@@ -50,7 +50,7 @@ t1337x() {
 }
 
 rarbg() {
-    torge_source 7 rarbg 20 "$@"
+    torge_source 7 rarbg 50 "$@"
 }
 
 nyaa() {
@@ -183,24 +183,24 @@ test_rarbg() {
     rarbg list >/dev/null
 
     echo rarbg size
-    assert "$(rarbg -s size the | field 3 | grep -E '^[0-9]{3,}(\.[0-9]+)? GB$' | wc -l)" -ge 18
+    assert "$(rarbg -s size the | field 4 | grep -E '^[0-9]{3,}(\.[0-9]+)? GB$' | wc -l)" -ge 18
     echo rarbg reverse size
-    assert "$(rarbg -s size -r the | field 3 | grep -E '^0(\.[0-9]+)? KB$' | wc -l)" -ge 18
+    assert "$(rarbg -s size -r the | field 4 | grep -E '^0(\.[0-9]+)? KB$' | wc -l)" -ge 18
 
     echo rarbg date
-    assert "$(rarbg -s date the | field 2 | grep -E "$(date "+%Y-%m-%d")" | wc -l)" -ge 1
+    assert "$(rarbg -s date the | field 3 | grep -E "$(date "+%Y-%m-%d")" | wc -l)" -ge 1
     echo rarbg reverse date
-    assert "$(rarbg -s date -r the | field 2 | grep '1970-' | wc -l)" -ge 4
+    assert "$(rarbg -s date -r the | field 3 | grep '1970-' | wc -l)" -ge 4
 
     echo rarbg se
-    assert "$(rarbg -s se the | field 4 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 18
+    assert "$(rarbg -s se the | field 5 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 18
     echo rarbg reverse se
-    assert "$(rarbg -s se -r the | field 4 | grep -Fx '0' | wc -l)" -ge 18
+    assert "$(rarbg -s se -r the | field 5 | grep -Fx '0' | wc -l)" -ge 18
 
     echo rarbg le
-    assert "$(rarbg -s le the | field 5 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 18
+    assert "$(rarbg -s le the | field 6 | grep -E '^[0-9]{3,}$' | wc -l)" -ge 18
     echo rarbg reverse le
-    assert "$(rarbg -s le -r the | field 5 | grep -Fx '0' | wc -l)" -ge 18
+    assert "$(rarbg -s le -r the | field 6 | grep -Fx '0' | wc -l)" -ge 18
 
     echo rarbg latest
     rarbg 25 --latest >/dev/null
@@ -209,7 +209,7 @@ test_rarbg() {
     assert "$(rarbg the -s se | field 7 | grep '\<https://' | wc -l)" -ge 20
 
     echo rarbg categories
-    assert "$(rarbg -c apps -s se the | field 1 | grep -F '{CracksHash}' | wc -l)" -ge 3
+    assert "$(rarbg -c apps -s se the | field 1 | grep -F 'Apps' | wc -l)" -ge 3
 }
 
 test_nyaa() {
