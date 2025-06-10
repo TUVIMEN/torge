@@ -429,52 +429,58 @@ t1337x_out() {
 
 rarbg_help() {
     printf 'Fields: name,date,size,se,le,author\n\n'
-    printf '  -c,  --categories CATEGORIES\tsearch one of the categories: movies, anime, xxx, tv, apps, games, doc, music, other\n'
+    printf '  -c,  --categories CATEGORIES\tsearch one of the categories: Movies, TV, Games, Music, Apps, Documentaries, Anime, Other, XXX\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
     printf "       --latest\t\t\tignore search pattern and show latest torrents\n"
 }
 
 rarbg_searchtrans() {
-    sed 's/+/%2B/g; s/;/%3B/g; s/\//%2F/g; s/?/%3F/g; s/\$/%24/g; s/@/%40/g; s/#/%23/g; s/%/%25/g; s/&/%26/g; s/ /+/g;'
+    sed 's/+/%2B/g; s/;/%3B/g; s/\//%2F/g; s/?/%3F/g; s/\$/%24/g; s/@/%40/g; s/#/%23/g; s/%/%25/g; s/&/%26/g'
 }
 
 rarbg_settings() {
-    [ -z "$DOMAIN" ] && DOMAIN="https://www.rarbgo.to"
-    RSORT="ASC"
+    [ -z "$DOMAIN" ] && DOMAIN="https://therarbg.to"
+    RSORT=""
     SORT=''
     case "$sort_type" in
         name) SORT='';;
-        size) SORT='size';;
-        date) SORT='data';;
-        se) SORT='seeders';;
-        le) SORT='leechers';;
+        size) SORT='s';;
+        date) SORT='a';;
+        se) SORT='se';;
+        le) SORT='le';;
     esac
-    [ -z "$sort_reverse" ] && RSORT="DESC"
-    [ -n "$SORT" ] && SORT="&order=$SORT&by=$RSORT"
-    [ -n "$categories_type" ] && CATEGORIES="&category=$categories_type"
-    makefields "name,date,size,se,le,author"
+    [ -z "$sort_reverse" ] && RSORT="-"
+    [ -n "$SORT" ] && SORT="order:$RSORT$SORT"
+    [ -n "$categories_type" ] && CATEGORIES="category:$categories_type"
+    makefields "category,name,date,size,se,le"
 }
 
-rarbg_fields="name,date,size,seeders,leechers,author,link"
+rarbg_fields="category,name,date,size,seeders,leechers,link"
 
 rarbg_page() {
     if [ "$LATEST" -eq 1 ]
     then
-        origin="https://www.rarbgo.to/$PAGE/"
+        origin="$DOMAIN"
     else
-        origin="$DOMAIN/search/$PAGE/?search=$SEARCHP$SORT$CATEGORIES"
+        t829143="$SORT"
+        [ -n "$t829143" ] && t829143="$t829143:"
+
+        t829143="$t829143$CATEGORIES"
+        [ -n "$t829143" ] && t829143="$t829143:"
+
+        origin="$DOMAIN/get-posts/${t829143}keywords:$SEARCHP/?page=$PAGE"
     fi
     t1="$(ucurl -s -L -g "$origin")"
-    out_tmp="$(echo "$t1" | reliq 'table .tablelist2; td; a title | "'"$DOMAIN"'%(href)v\n"')" #links
+    out_tmp="$(echo "$t1" | reliq 'table .b>sortableTable; tr l@[2]; a href=b>/post-detail/ | "'"$DOMAIN"'%(href)v\n"')" #links
     out_lines="$(echo "$t1" | reliq '
-        table .tablelist2; {
-            td; a title | "%i\n",
-            td .tlista width=150px c@[0] | "%i\n",
-            td .tlista width=100px | "%i\n",
-            font color | "%i\n",
-            td .tlista width=50px c@[0] | "%i\n",
-            td .tlista -width align=center | "%i\n"
+        table .b>sortableTable; tr l@[2]; {
+            a href=b>/get-posts/category: | "%i\n",
+            a href=b>/post-detail/ | "%i\n",
+            td .hideCell c@[1]; div i@"-" child@ | "%i\n",
+            td .sizeCell | "%i\n",
+            td style="color: green" | "%i\n",
+            td style="color: red" | "%i\n"
         }
     ' | pastelines)"
 }
