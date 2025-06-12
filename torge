@@ -519,7 +519,7 @@ nyaa_settings() {
     CATEGORIES='0_0'
     FILTER='0'
 
-    SORT=''
+    SORT='seeders'
     case "$sort_type" in
         name) SORT='';;
         comments) SORT='comments';;
