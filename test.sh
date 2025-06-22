@@ -175,7 +175,7 @@ test_1337x() {
     t1337x 42 --latest >/dev/null
 
     echo 1337x categories
-    assert "$(t1337x -c games -s se DLC | field 1 | grep '\<FitGirl\>' | wc -l)" -ge 2
+    assert "$(t1337x -c games -s se dlc | field 1 | grep '\<FitGirl\>' | wc -l)" -ge 2
 }
 
 test_rarbg() {
