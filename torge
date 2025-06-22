@@ -399,7 +399,7 @@ t1337x_settings() {
         esac
         [ -z "$sort_reverse" ] && RSORT="desc" || RSORT="asc"
     fi
-    case "$categories_type" in
+    [ -n "$categories_type" ] && case "$categories_type" in
         movies) CATEGORIES="Movies";;
         tv) CATEGORIES="TV";;
         games) CATEGORIES="Games";;
