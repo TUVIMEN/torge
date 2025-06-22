@@ -54,6 +54,19 @@ ucurl() {
     fi
 }
 
+e_selection() {
+    printf "unknown %s \"%s\" (check site's --help page)\n" "$1" "$2" >&2
+    exit 1
+}
+
+e_sort() {
+    e_selection "sorting type" "$1"
+}
+
+e_category() {
+    e_selection "category" "$1"
+}
+
 arg0="$(basename "$0")"
 
 print_help() {
@@ -177,7 +190,7 @@ tpb_searchtrans() {
 tpb_settings() {
     [ -z "$DOMAIN" ] && DOMAIN="https://tpb.party"
     SORT='7'
-    case "$sort_type" in
+    [ -n "$sort_type" ] && case "$sort_type" in
         name) SORT='1';;
         date) SORT='3';;
         size) SORT='5';;
@@ -185,11 +198,13 @@ tpb_settings() {
         le) SORT='9';;
         author) SORT='11';;
         category) SORT='13';;
+        *) e_sort "$sort_type";;
     esac
 
     CATEGORIES=""
     for i in $(echo "$categories_type" | tr ',/|' '   ')
     do
+        [ -z "$i" ] && continue
         case "$i" in
             audio) CATEGORIES="$CATEGORIES,100";;
             music) CATEGORIES="$CATEGORIES,101";;
@@ -250,6 +265,8 @@ tpb_settings() {
             covers) CATEGORIES="$CATEGORIES,604";;
             physibles) CATEGORIES="$CATEGORIES,605";;
             other-other) CATEGORIES="$CATEGORIES,699";;
+
+            *) e_category "$i";;
         esac
     done
     if [ -z "$CATEGORIES" ]
@@ -307,12 +324,13 @@ lt_searchtrans() {
 lt_settings() {
     [ -z "$DOMAIN" ] && DOMAIN="https://www.limetorrents.lol"
     SORT=''
-    case "$sort_type" in
+    [ -n "$sort_type" ] && case "$sort_type" in
         name) SORT='';;
         size) SORT='size';;
         date) SORT='date';;
         se) SORT='seeds';;
         le) SORT='leechs';;
+        *) e_sort "$sort_type";;
     esac
     makefields "name,date,size,se,le,health"
 }
@@ -373,6 +391,7 @@ t1337x_settings() {
             date) SORT='time';;
             se) SORT='seeders';;
             le) SORT='leechers';;
+            *) e_sort "$sort_type";;
         esac
         [ -z "$sort_reverse" ] && RSORT="desc" || RSORT="asc"
     fi
@@ -386,6 +405,7 @@ t1337x_settings() {
         anime) CATEGORIES="anime";;
         other) CATEGORIES="Other";;
         xxx) CATEGORIES="XXX";;
+        *) e_category "$categories_type";;
     esac
     makefields "name,date,size,se,le,author"
 }
@@ -447,12 +467,13 @@ rarbg_settings() {
     [ -z "$DOMAIN" ] && DOMAIN="https://therarbg.to"
     RSORT=""
     SORT=''
-    case "$sort_type" in
+    [ -n "$sort_type" ] && case "$sort_type" in
         name) SORT='';;
         size) SORT='s';;
         date) SORT='a';;
         se) SORT='se';;
         le) SORT='le';;
+        *) e_sort "$sort_type";;
     esac
     [ -z "$sort_reverse" ] && RSORT="-"
     [ -n "$SORT" ] && SORT="order:$RSORT$SORT"
@@ -524,7 +545,7 @@ nyaa_settings() {
     FILTER='0'
 
     SORT='seeders'
-    case "$sort_type" in
+    [ -n "$sort_type" ] && case "$sort_type" in
         name) SORT='';;
         comments) SORT='comments';;
         size) SORT='size';;
@@ -532,46 +553,44 @@ nyaa_settings() {
         se) SORT='seeders';;
         le) SORT='leechers';;
         downloads) SORT='downloads';;
+        *) e_sort "$sort_type";;
     esac
 
     [ -z "$sort_reverse" ] && RSORT="desc"
-    if [ -n "$filter_type" ]
-    then
-        case "$filter_type" in
-            no) FILTER='0';;
-            no-remakes) FILTER='1';;
-            trusted) FILTER='2';;
-        esac
-    fi
-    if [ -n "$categories_type" ]
-    then
-        case "$categories_type" in
-            all) CATEGORIES='0_0';;
-            anime) CATEGORIES='1_0';;
-            anime-music-video) CATEGORIES='1_1';;
-            anime-english-translated) CATEGORIES='1_2';;
-            anime-non-english-translated) CATEGORIES='1_3';;
-            anime-raw) CATEGORIES='1_4';;
-            audio) CATEGORIES='2_0';;
-            audio-lossless) CATEGORIES='2_1';;
-            audio-lossy) CATEGORIES='2_2';;
-            literature) CATEGORIES='3_0';;
-            literature-english-translated) CATEGORIES='3_1';;
-            literature-non-english-translated) CATEGORIES='3_2';;
-            literature-raw) CATEGORIES='3_3';;
-            live-action) CATEGORIES='4_0';;
-            live-action-english-translated) CATEGORIES='4_1';;
-            live-action-idol-promotional-video) CATEGORIES='4_2';;
-            live-action-non-english-translated) CATEGORIES='4_3';;
-            live-action-raw) CATEGORIES='4_4';;
-            pictures) CATEGORIES='5_0';;
-            pictures-graphics) CATEGORIES='5_1';;
-            pictures-photos) CATEGORIES='5_2';;
-            software) CATEGORIES='6_0';;
-            software-applications) CATEGORIES='6_1';;
-            software-games) CATEGORIES='6_2';;
-        esac
-    fi
+    [ -n "$filter_type" ] && case "$filter_type" in
+        no) FILTER='0';;
+        no-remakes) FILTER='1';;
+        trusted) FILTER='2';;
+        *) e_selection "filter type" "$filter_type";;
+    esac
+
+    [ -n "$categories_type" ] && case "$categories_type" in
+        all) CATEGORIES='0_0';;
+        anime) CATEGORIES='1_0';;
+        anime-music-video) CATEGORIES='1_1';;
+        anime-english-translated) CATEGORIES='1_2';;
+        anime-non-english-translated) CATEGORIES='1_3';;
+        anime-raw) CATEGORIES='1_4';;
+        audio) CATEGORIES='2_0';;
+        audio-lossless) CATEGORIES='2_1';;
+        audio-lossy) CATEGORIES='2_2';;
+        literature) CATEGORIES='3_0';;
+        literature-english-translated) CATEGORIES='3_1';;
+        literature-non-english-translated) CATEGORIES='3_2';;
+        literature-raw) CATEGORIES='3_3';;
+        live-action) CATEGORIES='4_0';;
+        live-action-english-translated) CATEGORIES='4_1';;
+        live-action-idol-promotional-video) CATEGORIES='4_2';;
+        live-action-non-english-translated) CATEGORIES='4_3';;
+        live-action-raw) CATEGORIES='4_4';;
+        pictures) CATEGORIES='5_0';;
+        pictures-graphics) CATEGORIES='5_1';;
+        pictures-photos) CATEGORIES='5_2';;
+        software) CATEGORIES='6_0';;
+        software-applications) CATEGORIES='6_1';;
+        software-games) CATEGORIES='6_2';;
+        *) e_category "$categories_type";;
+    esac
     makefields "category,name,size,date,se,le,downloaded"
 }
 
@@ -630,15 +649,15 @@ libgen_settings() {
     [ -z "$RESULTS" ] && RESULTS='25'
 
     MODE='0'
-    case "$mode_type" in
+    [ -n "$mode_type" ] && case "$mode_type" in
         f|fiction) MODE='1'; makefields "name,author,size,extension,language";;
         s|science) MODE='2'; makefields "name,author,size,volume";;
-        #nf|non-fiction)
-        *) MODE='0'; makefields "name,pages,size,date,author,extension";;
+        nf|non-fiction) MODE='0'; makefields "name,pages,size,date,author,extension";;
+        *) e_selection "mode" "$mode_type";;
     esac
 
     SORT=''
-    case "$sort_type" in
+    [ -n "$sort_type" ] && case "$sort_type" in
         id) SORT='id';;
         name) SORT='title';;
         publisher) SORT='publisher';;
@@ -647,12 +666,13 @@ libgen_settings() {
         lang) SORT='language';;
         size) SORT='filesize';;
         extension) SORT='extension';;
+        *) e_sort "$sort_type";;
     esac
     RSORT="DESC"
     [ -z "$sort_reverse" ] && RSORT="ASC"
 
     SEARCHBY='def'
-    case "$searchby_type" in
+    [ -n "$searchby_type" ] && case "$searchby_type" in
         def) SEARCHBY="def";;
         name) SEARCHBY="title";;
         author) SEARCHBY="author";;
@@ -664,6 +684,7 @@ libgen_settings() {
         md5) SEARCHBY="md5";;
         tags) SEARCHBY="tags";;
         extension) SEARCHBY="extension";;
+        *) e_selection "search condition" "$searchby_type";;
     esac
 
     LANG="";
