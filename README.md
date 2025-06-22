@@ -10,7 +10,7 @@ A shell script for searching for links on torrent sites.
  - limetorrents
  - rarbg (you might get blocked by cloudflare when getting magnet links)
  - nyaa
- - 1337x - the [official websites](https://www.1337x.to/) blocks me with cloudflare, that's why an unoffical, copycat, honeypot [site](https://www.1337xx.to) is used by default (not listed as official, doesn't show comments or allow to upload torrents, search works only on the first word). Before using try to check if official site works for you `./torge 1337x -D 'https://www.1337x.to' linux`.
+ - 1337x - the [official websites](https://www.1337x.to/) blocks me with cloudflare, that's why an unoffical, copycat, honeypot [site](https://www.1337xx.to) is used by default (not listed as official, doesn't show comments or allow to upload torrents, search works only on the first word). Before using try to check if official site works for you `./torge 1337x -D 'https://www.1337x.to' linux`. Official site doesn't block searching by categories.
  - libgen
 
 ## Requirements
