@@ -350,7 +350,7 @@ lt_out() {
 
 t1337x_help() {
     printf 'Fields: name,date,size,se,le,author\n\n'
-    printf '  -c,  --categories CATEGORIES\tsearch one of the categories: movies, tv, games, music, apps\n'
+    printf '  -c,  --categories CATEGORIES\tsearch one of the categories: movies, tv, games, music, apps, documentaries, anime, other, xxx\n'
     printf '  -s,  --sort TYPE\t\tsort using TYPE that can be: name, size, date, se, le\n'
     printf "  -r,  --reverse\t\tsort in reverse\n"
     printf "       --latest\t\tignore search pattern and show latest torrents (--page doesn't work)\n"
@@ -382,6 +382,10 @@ t1337x_settings() {
         games) CATEGORIES="Games";;
         music) CATEGORIES="Music";;
         apps) CATEGORIES="Apps";;
+        documentaries) CATEGORIES="Documentaries";;
+        anime) CATEGORIES="anime";;
+        other) CATEGORIES="Other";;
+        xxx) CATEGORIES="XXX";;
     esac
     makefields "name,date,size,se,le,author"
 }
