@@ -67,6 +67,10 @@ e_category() {
     e_selection "category" "$1"
 }
 
+to_lower() {
+    sed 's/[A-Z]/\L&/g'
+}
+
 arg0="$(basename "$0")"
 
 print_help() {
@@ -865,9 +869,6 @@ shift
 while [ $# -gt 0 ]
 do
     case "$1" in
-        -s|--sort)
-            sort_type="$2"
-            shift;;
         -h|--help)
             ${basesite}_help >&2;
             exit 1;;
@@ -890,17 +891,20 @@ do
         -R|--results)
             RESULTS="$2"
             shift;;
+        -s|--sort)
+            sort_type="$(echo "$2" | to_lower)"
+            shift;;
         -f|--filter)
-            filter_type="$2"
+            filter_type="$(echo "$2" | to_lower)"
             shift;;
         -c|--categories)
-            categories_type="$2"
+            categories_type="$(echo "$2" | to_lower)"
             shift;;
         -S|--searchby)
-            searchby_type="$2"
+            searchby_type="$(echo "$2" | to_lower)"
             shift;;
         -m|--mode)
-            mode_type="$2"
+            mode_type="$(echo "$2" | to_lower)"
             shift;;
         -M|--mask)
             mask_enable="1";;
@@ -934,7 +938,7 @@ do
         --latest)
             LATEST=1;;
         -a|--arrangement)
-            ARRANGEMENT_FORMAT="$2"
+            ARRANGEMENT_FORMAT="$(echo "$2" | to_lower)"
             shift;;
         *)
             if [ -z "$SEARCH" ]
