@@ -903,7 +903,7 @@ do
             mode_type="$2"
             shift;;
         -M|--mask)
-            mask_enable="$2";;
+            mask_enable="1";;
         -C|--no-color)
             COLOR=0;;
         -p|--page)
