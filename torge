@@ -192,7 +192,7 @@ tpb_searchtrans() {
 }
 
 tpb_settings() {
-    [ -z "$DOMAIN" ] && DOMAIN="https://tpb.party"
+    [ -z "$DOMAIN" ] && DOMAIN="https://thepiratebay10.info" #https://tpb.party
     SORT='7'
     [ -n "$sort_type" ] && case "$sort_type" in
         name) SORT='1';;
