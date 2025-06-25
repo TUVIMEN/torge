@@ -97,7 +97,8 @@ print_help() {
 }
 
 pastelines() {
-    awk -v "raw_colors=$COLORS" -v "raw_arrangement=$ARRANGEMENT" 'function print_fields(lines,arrangement,alen,step,colors) {
+    awk -v "raw_colors=$COLORS" -v "raw_arrangement=$ARRANGEMENT" '
+    function print_fields(lines,arrangement,alen,step,colors) {
             ORS = ""
             for (i = 0; i < step; i++) {
                 for (j = 2; j <= alen; j++) {
@@ -664,8 +665,8 @@ libgen_settings() {
 
     [ -z "$RESULTS" ] && RESULTS='25'
 
-    MODE='0'
-    [ -n "$mode_type" ] && case "$mode_type" in
+    [ -z "$mode_type" ] && mode_type='nf'
+    case "$mode_type" in
         f|fiction) MODE='1'; makefields "name,author,size,extension,language";;
         s|science) MODE='2'; makefields "name,author,size,volume";;
         nf|non-fiction) MODE='0'; makefields "name,pages,size,date,author,extension";;
