@@ -621,7 +621,7 @@ nyaa_page() {
         origin="$DOMAIN/?f=$FILTER&c=$CATEGORIES&q=$SEARCHP&s=$SORT&o=$RSORT&p=$PAGE"
     fi
     t1="$(ucurl -s "$origin")"
-    out_tmp="$(echo "$t1" | reliq 'table .torrent-list; td class; a href=b>magnet:? | "%(href)v\n"')"
+    out_tmp="$(echo "$t1" | reliq 'table .torrent-list; td class; a href=b>magnet:? | "%(href)Dv\n"')"
     out_lines="$(echo "$t1" | reliq '
         table .torrent-list; {
             a href=B>/?c=[0-9]_[0-9]; img .category-icon alt | "%(alt)v\n",
