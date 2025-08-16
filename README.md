@@ -167,7 +167,7 @@ My fzf integration that adds magnets to transmission-remote or copies wget comma
 
 ```shell
 ftorge() {
-    res="$(torge "$@" --no-clipboard --no-prompt --choose 'fzf --ansi --multi | cut -f1 | paste -sd ,')"
+    local -r res="$(torge "$@" -D ' ' --no-clipboard --no-prompt --choose 'sed "s/^ *//" | fzf --with-nth 4.. --reverse -i --ansi --multi | cut -f1 -d " " | paste -sd ,')"
     [ "$?" -ne '0' ] && return
     if [ "$1" = 'libgen' ]
     then
@@ -176,6 +176,7 @@ ftorge() {
         sed "s/^/'/;s/$/'/" <<< "$res" | paste -sd ' '
         } | xclip -r -sel clip
     else
+        local i
         for i in $res
         do
             transmission-remote -a "$i"
