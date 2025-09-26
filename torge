@@ -33,7 +33,7 @@ C_DATE="36"
 C_NAME="39"
 COLOR=1
 
-alias basic_curl='curl -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/5.15.2 Chrome/87.0.4280.144 Safari/537.36" -H "Accept-Encoding: gzip, deflate" --compressed'
+alias basic_curl='curl -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0" -H "Accept-Encoding: gzip, deflate" --compressed'
 
 curl_no_cf() {
     t19192="$(basic_curl "$@")"
@@ -327,7 +327,7 @@ lt_searchtrans() {
 }
 
 lt_settings() {
-    [ -z "$DOMAIN" ] && DOMAIN="https://www.limetorrents.lol"
+    [ -z "$DOMAIN" ] && DOMAIN="https://www.limetorrents.fun"
     SORT=''
     [ -n "$sort_type" ] && case "$sort_type" in
         name) SORT='';;
